@@ -3,7 +3,7 @@
 import sys
 import unittest
 
-from hermes.event import Event
+from evesp.event import Event
 
 class TestEvent(unittest.TestCase):
     def setUp(self):
