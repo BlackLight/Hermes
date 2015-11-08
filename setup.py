@@ -18,7 +18,7 @@ setup(
     long_description=read('README.md'),
     entry_points = {
         'console_scripts': [
-            'evespd = evesp.__main__:main'
+            'evespd = evesp.__main__:_boot'
         ],
     },
 
