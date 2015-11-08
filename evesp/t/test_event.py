@@ -3,8 +3,7 @@
 import sys
 import unittest
 
-sys.path.insert(0, '..')
-from event import Event
+from hermes.event import Event
 
 class TestEvent(unittest.TestCase):
     def setUp(self):
