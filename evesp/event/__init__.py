@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 class Event(object):
     """
     Base class for events
