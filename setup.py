@@ -4,6 +4,8 @@ from setuptools import setup
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+conf_file_path = os.path.join(os.getenv('HOME'), '.config', 'evesp')
+
 setup(
     name = "evesp",
     # version = "TBD",
@@ -22,7 +24,11 @@ setup(
         ],
     },
 
-    classifiers=[
+    data_files = [
+        (conf_file_path, ['evesp/main.conf.example'])
+    ],
+
+    classifiers = [
         "Development Status :: In Progress",
         "License :: OSI Approved :: Apache Licence 2.0",
     ],
