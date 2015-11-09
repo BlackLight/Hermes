@@ -1,0 +1,22 @@
+language: python
+python:
+  - "3.4"
+  - "3.5"
+
+# command to install dependencies
+# install: "pip install -r requirements.txt"
+
+# command to run tests
+script: ./run_tests.py
+
+git:
+    # Don't download all the submodules
+    submodules: false
+
+notifications:
+    email:
+        recipients:
+            - blacklight86@gmail.com
+        on_success: change
+        on_failure: change
+
