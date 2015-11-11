@@ -31,3 +31,5 @@ class TestEvent(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+# vim:sw=4:ts=4:et:
+

@@ -59,3 +59,5 @@ class Event(object):
         id = attrs.pop('id')
         return Event(id, **attrs)
 
+# vim:sw=4:ts=4:et:
+

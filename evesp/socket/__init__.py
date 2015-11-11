@@ -6,3 +6,6 @@ class Socket(object):
 
     def send(self, event):
         pass  # TBD
+
+# vim:sw=4:ts=4:et:
+

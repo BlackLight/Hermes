@@ -8,3 +8,5 @@ if sys.version_info < (3,):
 
 __version__ = 'git'
 
+# vim:sw=4:ts=4:et:
+

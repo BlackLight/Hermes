@@ -10,3 +10,5 @@ def main(args, env):
 if __name__ == '__main__':
     _boot()
 
+# vim:sw=4:ts=4:et:
+
