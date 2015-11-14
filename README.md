@@ -11,5 +11,5 @@ Installation
 Dependencies
 ------------
 
-PyDispatch (http://pydispatcher.sourceforge.net/), `pip install PyDispatch`
+PyDispatcher (http://pydispatcher.sourceforge.net/), `pip install PyDispatcher`
 
