@@ -8,3 +8,8 @@ Installation
 
 `main.conf.example` will be copied to `~/.config/evesp`. Edit it and rename it `main.conf` and you're ready to go.
 
+Dependencies
+------------
+
+PyDispatch (http://pydispatcher.sourceforge.net/), `pip install PyDispatch`
+
