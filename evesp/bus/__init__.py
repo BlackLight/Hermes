@@ -1,4 +1,6 @@
-from pydispatch import dispatcher
+from queue import Queue
+from time import time
+from threading import RLock
 
 class Bus(object):
     """
@@ -7,13 +9,27 @@ class Bus(object):
     """
 
     def __init__(self, engine):
-        dispatcher.connect(self.__event_handler, signal=dispatcher.Any, sender=dispatcher.Any)
-
-    def __event_handler(self, event):
-        print(event)
+        self.__evt_queue = Queue()
+        self.__evt_lock = RLock()
 
     def post(self, event):
-        dispatcher.send(signal=dispatcher.Any, event=event)
+        """
+        Post an event to the bus
+        """
+
+        event.timestamp = time()
+        self.__evt_lock.acquire()
+
+        try:
+            self.__evt_queue.put((event))
+        finally:
+            self.__evt_lock.release()
+
+    def next_event(self):
+        """
+        Return the next event on the bus
+        """
+        return self.__evt_queue.get()
 
 # vim:sw=4:ts=4:et:
 

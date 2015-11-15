@@ -12,5 +12,5 @@ class MockComponent(Component):
 
     def run(self):
         evt = mock_event.MockEvent(id=1, name='Test event')
-        self.bus.post(event=evt)
+        self.fire_event(evt)
 

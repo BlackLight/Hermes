@@ -40,17 +40,18 @@ class Config(object):
                 self.__dict__[section].__dict__[key] = value
                 self.components[section][key] = value
 
-    @classmethod
-    def __get_conf_file_path(cls):
+    def __get_conf_file_path(self):
         config_file_locations = [
-            os.path.join(os.getcwd(), cls.__default_config_file_name),
-            os.path.join(os.path.expanduser('~'), '.config', 'evesp', cls.__default_config_file_name),
-            os.path.join(os.path.abspath(os.sep), 'etc', 'evesp', cls.__default_config_file_name)
+            os.getcwd(),
+            os.path.join(os.path.expanduser('~'), '.config', 'evesp'),
+            os.path.join(os.path.abspath(os.sep), 'etc', 'evesp')
         ]
 
         for location in config_file_locations:
-            if os.path.isfile(location):
-                return location
+            rcfile = os.path.join(location, cls.__default_config_file_name)
+            if os.path.isfile(rcfile):
+                self.config_dir = location
+                return rcfile
 
         raise RuntimeError('No valid configuration file was found - paths: %s' % config_file_locations)
 

@@ -10,7 +10,7 @@ print(conf_file_path)
 setup(
     name = "evesp",
     # version = "TBD",
-    install_requires = ['PyDispatcher>=2.0.5'],
+    # install_requires = ['PyDispatcher>=2.0.5'],
     author = "Fabio Manganiello",
     author_email = "blacklight86@gmail.com",
     description = ("Evesp - EVEnt Socket Platform - a middleware infrastructure for events"),
