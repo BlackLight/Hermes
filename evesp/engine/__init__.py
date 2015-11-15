@@ -20,7 +20,7 @@ class Engine(object):
         self.config = config
         self.components = {}
         self.__classes = {}
-        self.__event_processor = processor_class(**(processor_class_args))
+        self.event_processor = processor_class(**(processor_class_args))
 
         for comp_name, component in self.config.components.items():
             if not 'module' in component:
@@ -66,7 +66,7 @@ class Engine(object):
         while max_events is None or n_events < int(max_events):
             evt = self.bus.next_event()
             n_events += 1
-            self.__event_processor.on_event(evt)
+            self.event_processor.on_event(evt)
 
 # vim:sw=4:ts=4:et:
 
