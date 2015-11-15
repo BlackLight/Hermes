@@ -7,11 +7,6 @@ Installation
     $ cd evesp/
     $ pip install .
 
-Dependencies
-------------
-
-PyDispatcher (http://pydispatcher.sourceforge.net/), `pip install PyDispatcher`
-
 Configuration
 =============
 
