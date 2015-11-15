@@ -1,4 +1,9 @@
+import os
+
 from configparser import ConfigParser
+
+class ConfigSection(object):
+    pass
 
 class Config(object):
     """
@@ -10,8 +15,12 @@ class Config(object):
     # Private methods
     ######
 
+    __default_config_file_name = 'evesp.conf'
+
     def __parse_rc_file(self, rcfile):
         parser = ConfigParser()
+        self.components = {}
+
         with open(rcfile) as fp:
             parser.read_file(fp)
 
@@ -20,49 +29,58 @@ class Config(object):
             if parser.has_option(section, 'enabled') and parser.getboolean(section, 'enabled') is False:
                 continue
 
-            """
-            (Key) case insensitive flat mapping
-            [logger]
-            Level=INFO
-            MyModule.level=DEBUG
-
-            becomes
-
-            self.config['logger.level'] = 'INFO'
-            self.config['logger.mymodule.level'] = 'DEBUG'
-            """
+            # Two ways to access the Config parameters
+            # 1: config.component_name.value
+            # 2: config.components['component_name']['value']
             for key, value in parser.items(section):
-                key = ('%s.%s' % (section, key)).lower()
-                self.config[key] = value
+                if not section in self.__dict__:
+                    self.__dict__[section] = ConfigSection()
+                    self.components[section] = {}
+
+                self.__dict__[section].__dict__[key] = value
+                self.components[section][key] = value
+
+    @classmethod
+    def __get_conf_file_path(cls):
+        config_file_locations = [
+            os.path.join(os.getcwd(), cls.__default_config_file_name),
+            os.path.join(os.path.expanduser('~'), '.config', 'evesp', cls.__default_config_file_name),
+            os.path.join(os.path.abspath(os.sep), 'etc', 'evesp', cls.__default_config_file_name)
+        ]
+
+        for location in config_file_locations:
+            if os.path.isfile(location):
+                return location
+
+        raise RuntimeError('No valid configuration file was found - paths: %s' % config_file_locations)
 
     ######
     # Public methods
     ######
 
-    def __init__(self, rcfile):
+    def __init__(self, rcfile=None, **kwargs):
         """
         Configuration constructor
-        rcfile -- Path string to the configuration file
+
+        rcfile -- Path string to the configuration file.
+            If None, the Config object will be initialized on the basis of the kwargs named-values.
+            If no keyword arguments are passed, try to parse the main configuration file from one
+            of the following locations:
+
+            1. ./evesp.conf
+            2. ~/.config/evesp/evesp.conf
+            3. /etc/evesp/evesp.conf
+
+        Sections having enabled=False will be skipped
         """
 
-        self.config = {}
+        if rcfile is None:
+            if len(dict(kwargs).keys()) > 0:
+                self.__dict__.update(kwargs)
+                return
+
+            rcfile = self.__get_conf_file_path()
         self.__parse_rc_file(rcfile)
-
-        if len(self.config.items()) == 0:
-            raise RuntimeError(
-                'No configuration has been loaded - empty of invalid %s file'
-                % (rcfile)
-            )
-
-    def get(self, attr):
-        """
-        Configuration getter
-        attr -- Attribute name - note that we are case insensitive when it comes to attribute names
-        """
-        attr = attr.lower()
-        # Let's agree on one thing:
-        # A non-existing attribute is the same of an attribute having value None
-        return self.config[attr] if attr in self.config else None
 
 # vim:sw=4:ts=4:et:
 

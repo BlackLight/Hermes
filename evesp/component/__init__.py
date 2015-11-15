@@ -38,5 +38,13 @@ class Component(object):
         # TBD
         raise NotImplementedError()
 
+    def fire_event(self, event):
+        """
+        Standard API for firing events
+        Set the component field on the event before posting it to the bus
+        """
+        event.component = self.name
+        self.instance.bus.post(event)
+
 # vim:sw=4:ts=4:et:
 

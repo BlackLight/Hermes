@@ -4,7 +4,7 @@ class Event(object):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, component=None, **kwargs):
         """
         Constructor
         Params:
@@ -12,8 +12,9 @@ class Event(object):
         """
 
         self.__kwargs = kwargs
+        self.component = component
         for attr, value in kwargs.items():
-            setattr(self, attr, value)
+            self.__dict__[attr] = value
 
     def get(self, attr):
         " Get an event attribute by name. Return None if the attribute doesn't exist "
