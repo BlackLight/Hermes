@@ -66,7 +66,6 @@ class Engine(object):
         while max_events is None or n_events < int(max_events):
             evt = self.bus.next_event()
             n_events += 1
-            print("HERE")
             self.__event_processor.on_event(evt)
 
 # vim:sw=4:ts=4:et:
