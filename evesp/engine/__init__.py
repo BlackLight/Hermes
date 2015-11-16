@@ -1,3 +1,4 @@
+from evesp import utils
 from evesp.bus import Bus
 from evesp.event_processor.default_event_processor import DefaultEventProcessor
 
@@ -26,24 +27,10 @@ class Engine(object):
             if not 'module' in component:
                 raise AttributeError('No module name specified for the component name %s - '
                     + 'e.g. evesp.component.mock_component' % (comp_name))
-
-            module_name = component['module']
-            module = __import__(module_name, ['*'])
-            for module_token in module_name.split('.')[1:]:
-                module = getattr(module, module_token)
-            self.__classes[comp_name] = getattr(module, self.__main_class_name_from_module_name(module_name))
+            self.__classes[comp_name] = utils.component_class_by_module_name(component['module'])
 
             # Now that it's been used, removed the module key from the component configuration
             del self.config.components[comp_name]['module']
-
-    @staticmethod
-    def __main_class_name_from_module_name(module_name):
-        """
-        By convention, component module names have lowercase with underscore names,
-        while their main classes have camel case names
-        """
-        import re
-        return re.sub(r'(^|((?!^)_))([a-zA-Z])', lambda m: m.group(3).upper(), module_name.split('.')[-1])
 
     def start(self, max_events=None):
         """
