@@ -65,7 +65,7 @@ class Event(object):
 
     @classmethod
     def __same_classes(cls, obj1, obj2):
-        return type(obj1) == obj2.__class__
+        return type(obj1) == type(obj2)
 
     @classmethod
     def __same_values(cls, value1, value2):
@@ -79,7 +79,8 @@ class AttributeValueAny(object):
     """
     When an event attribute type is AttributeValueAny,
     that attribute won't be taken into account when
-    .equals is invoked to compare it with another event.
+    two events are compared through == operator or
+    explicit __eq__ method invocation.
 
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
