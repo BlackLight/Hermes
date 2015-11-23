@@ -55,5 +55,8 @@ class Engine(object):
             n_events += 1
             self.event_processor.on_event(evt)
 
+    def get_rules(self):
+        return self.rules
+
 # vim:sw=4:ts=4:et:
 
