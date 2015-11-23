@@ -8,6 +8,8 @@ class TestEvent(unittest.TestCase):
 
     def test_event_creation(self):
         self.assertEqual(self.evt.foo, 'bar')
+
+    def test_non_existing_event(self):
         self.assertRaises(AttributeError, getattr, self.evt, 'non_existing')
 
     def test_event_pickle_serialization(self):
