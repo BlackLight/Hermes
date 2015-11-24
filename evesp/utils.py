@@ -27,5 +27,15 @@ def event_class_by_class_name(class_name):
         module = getattr(module, module_token)
     return getattr(module, class_name)
 
+def actuator_class_by_class_name(class_name):
+    module_name = '.'.join([
+        'evesp', 'actuator', uncamelize(class_name)
+    ])
+
+    module = __import__(module_name, ['*'])
+    for module_token in module_name.split('.')[1:]:
+        module = getattr(module, module_token)
+    return getattr(module, class_name)
+
 # vim:sw=4:ts=4:et:
 
