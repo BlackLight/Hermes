@@ -4,8 +4,8 @@ class Actuator(object):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, **params):
-        vars(self).update(params)
+    def __init__(self, **kwargs):
+        vars(self).update(kwargs)
 
     def on_event(self, event):
         """
