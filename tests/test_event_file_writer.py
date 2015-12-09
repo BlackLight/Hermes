@@ -2,7 +2,7 @@ import os
 import unittest
 
 from evesp.event.mock_event import MockEvent
-from evesp.actuator.event_file_writer import EventFileWriter
+from evesp.action.event_file_writer import EventFileWriter
 
 class TestEventFileWriter(unittest.TestCase):
     def setUp(self):

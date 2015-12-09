@@ -1,9 +1,11 @@
-from evesp.event import mock_event
+from evesp.socket.mock_socket import MockSocket
 from evesp.component import Component
 
 class MockComponent(Component):
     """
-    Mock component class. It posts a mock event on the bus and returns
+    Mock component class.
+    It installs a mock socket and returns when the first event is published
+
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
@@ -11,6 +13,9 @@ class MockComponent(Component):
         super().__init__(instance=self, name=name)
 
     def run(self):
-        evt = mock_event.MockEvent(id=1, name='Test event')
+        sock = MockSocket()
+        sock.connect(self.component_bus)
+
+        evt = self.component_bus.next(blocking=True, timeout=1)
         self.fire_event(evt)
 

@@ -65,7 +65,9 @@ class Event(object):
 
     @classmethod
     def __same_classes(cls, obj1, obj2):
-        return type(obj1) == type(obj2)
+        return True \
+            if (type(obj1) == Event or type(obj2) == Event) \
+            else type(obj1) == type(obj2)
 
     @classmethod
     def __same_values(cls, value1, value2):
@@ -74,6 +76,12 @@ class Event(object):
                 and not isinstance(value2, AttributeValueAny):
             return False
         return value1 == value2
+
+class StopEvent(Event):
+    """
+    A special event used to asynchronously stop components, workers and sockets
+    Fabio Manganiello, 2015 <blacklight86@gmail.com>
+    """
 
 class AttributeValueAny(object):
     """
@@ -88,6 +96,9 @@ class AttributeValueAny(object):
     def __eq__(self, value):
         """ Always return True. Any value equals "any" """
         return True
+
+    def __repr__(self):
+        return "__ANY__"
 
 # vim:sw=4:ts=4:et:
 

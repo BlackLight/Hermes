@@ -7,7 +7,7 @@ from evesp.rules_parser import RulesParser
 class TestRulesParser(unittest.TestCase):
     def setUp(self):
         basedir = os.path.dirname(os.path.realpath(__file__))
-        rules_file = os.path.join(basedir, 'rules', 'test_rules_parser.json')
+        rules_file = os.path.join(basedir, 'rules', 'test_mock_component_rules.json')
         self.rules = RulesParser(rules_file).get_rules()
 
     def test_rules_number(self):

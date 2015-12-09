@@ -14,7 +14,7 @@
             {
                 "class": "EventFileWriter",
                 "arguments": {
-                    "filepath": "/tmp/evesp_test.bin"
+                    "filepath": "tests/events.bin"
                 }
             }
         ]

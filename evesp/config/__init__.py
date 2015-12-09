@@ -7,7 +7,7 @@ class ConfigSection(object):
 
 class Config(object):
     """
-    Configuration parser for EVEsp .conf files
+    Configuration parser for evesp .conf files
     @author: Fabio Manganiello <blacklight86@gmail.com>
     """
 
@@ -16,6 +16,7 @@ class Config(object):
     ######
 
     __default_config_file_name = 'evesp.conf'
+    __engine_section_name = 'engine'
 
     def __parse_rc_file(self, rcfile):
         parser = ConfigParser()
@@ -35,7 +36,11 @@ class Config(object):
             for key, value in parser.items(section):
                 if not section in self.__dict__:
                     self.__dict__[section] = ConfigSection()
-                    self.components[section] = {}
+
+                    # "engine" is considered as a special section for engine configuration.
+                    # Any other section is treated as a component
+                    if section != self.__engine_section_name:
+                        self.components[section] = {}
 
                 self.__dict__[section].__dict__[key] = value
                 self.components[section][key] = value

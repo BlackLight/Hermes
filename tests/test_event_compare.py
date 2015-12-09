@@ -37,9 +37,9 @@ class TestEventCompare(unittest.TestCase):
         mock_event = MyEvent(id=2, name='foo')
         self.assertFalse(mock_event == self.evt)
 
-    def test_event_not_equals_parent_type(self):
+    def test_event_equals_parent_type(self):
         mock_event = Event(id=1, name='foo')
-        self.assertFalse(mock_event == self.evt)
+        self.assertTrue(mock_event == self.evt)
 
 if __name__ == "__main__":
     unittest.main()

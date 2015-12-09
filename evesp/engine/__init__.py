@@ -1,6 +1,12 @@
-from evesp import utils
-from evesp.bus import Bus
-from evesp.event_processor.default_event_processor import DefaultEventProcessor
+from itertools import cycle
+from threading import Thread
+
+from evesp.bus import Bus, EmptyBus
+from evesp.component import Component
+from evesp.event import Event, StopEvent
+from evesp.rules_parser import RulesParser
+from evesp.utils import *
+from evesp.worker import Worker, WorkerState
 
 class Engine(object):
     """
@@ -8,40 +14,124 @@ class Engine(object):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, config, processor_class=DefaultEventProcessor, processor_class_args={}):
+    # Default number of workers
+    __DEFAULT_WORKERS = 5
+
+    # The supervisor by default polls the workers' value bus each 0.01 seconds
+    __DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD = 0.01
+
+    def __init__(self, config):
         """
         Constructor
 
         config -- evesp.config.Config object
-        processor_class -- A class which extends evesp.event_processor.EventProcessor.
-            If not specified, the engine will use its default event processor
-        processor_class_args -- Arguments for the constructor of processor_class, if any
         """
 
         self.config = config
         self.components = {}
         self.__classes = {}
-        self.event_processor = processor_class(**(processor_class_args))
+        self.__parsed_engine_config = False
 
         for comp_name, component in self.config.components.items():
-            if not 'module' in component:
-                raise AttributeError('No module name specified for the component name %s - '
-                    + 'e.g. evesp.component.mock_component' % (comp_name))
-            self.__classes[comp_name] = utils.component_class_by_module_name(component['module'])
+            if self.__is_engine_comp_name(comp_name):
+                self.__parse_engine_comp_config(component)
+            else:
+                if not 'module' in component:
+                    raise AttributeError('No module name specified for the component name '
+                        + comp_name + ' - e.g. evesp.component.mock_component')
+                self.__classes[comp_name] = component_class_by_module_name(component['module'])
 
-            # Now that it's been used, removed the module key from the component configuration
-            del self.config.components[comp_name]['module']
+                # Now that it's been used, removed the module key from the component configuration
+                del self.config.components[comp_name]['module']
 
-    def start(self, max_events=None):
-        """
-        Start the components listed in the configuration and the engine main loop
+        if not self.__parsed_engine_config:
+            raise AttributeError('The configuration file has no __engine module configuration')
 
-        max_events -- If set, the engine will stop after having processed that number of events
-            Otherwise, it will forever loop for events on the bus to process
-        """
+    @classmethod
+    def __is_engine_comp_name(cls, comp_name):
+        return comp_name == '__engine'
 
-        self.bus = Bus(engine=self)
+    def __parse_engine_comp_config(self, component):
+        self.__parsed_engine_config = True
 
+        ##
+        # n_workers
+        ##
+        n_workers = self.__DEFAULT_WORKERS
+        if 'workers' in component:
+            assert component['workers'].isnumeric()
+            n_workers = int(component['workers'])
+
+        ##
+        # events_to_process
+        ##
+        self.__events_to_process = None
+        if 'events_to_process' in component:
+            assert component['events_to_process'].isnumeric()
+            self.__events_to_process = int(component['events_to_process'])
+
+        self.__create_worker_pool(n_workers)
+
+        ##
+        # rules_file
+        ##
+        assert 'rules_file' in component
+        rules_file = component['rules_file']
+
+        self.__create_event_map(rules_file)
+
+    def __create_worker_pool(self, n_workers):
+        workers = [Worker() for worker in range(0, n_workers)]
+        self.__workers = workers
+
+        for worker in workers:
+            worker.start()
+
+        # Turn the list of workers into a circular pool
+        self.__workers_pool = cycle(workers)
+
+        # Workers supervisor thread. It polls the workers' value bus and eventually
+        # reacts when values are ready, and stops the workers in case the engine
+        # sets the shutdown flag.
+        self.__workers_supervisor = Thread(target = self.__run_workers_supervisor)
+        self.__workers_supervisor.start()
+
+    def __run_workers_supervisor(self):
+        worker_idx = 0
+        while self.__workers:
+            worker = self.__workers[worker_idx]
+            if worker.state == WorkerState.stopped:
+                # Remove the stopped worker from the list and update the pool
+                del self.__workers[worker_idx]
+                self.__workers_pool = cycle(self.__workers)
+
+            # Poll the value bus
+            try:
+                ret_value = worker.value_bus.next(blocking=False, timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
+
+                ##
+                # TODO Do something with the value
+                ##
+
+            except EmptyBus:
+                pass
+
+            if self.__workers:
+                worker_idx %= (len(self.__workers)+1)
+
+    def __create_event_map(self, rules_file):
+        self.__rules_file = rules_file
+        self.__rules = RulesParser(self.__rules_file).get_rules()
+        self.__rules_by_event_class = {}
+
+        for rule in self.__rules:
+            for event in rule['when']:
+                event_class = get_full_class_name(event)
+                if not event_class in self.__rules_by_event_class:
+                    self.__rules_by_event_class[event_class] = []
+                self.__rules_by_event_class[event_class].append(rule)
+
+    def __start_components(self):
         for name, cls in self.__classes.items():
             component = cls(name=name, **(self.config.components[name]))
             self.components[name] = component
@@ -49,14 +139,69 @@ class Engine(object):
             component.register(self.bus)
             component.start()
 
-        n_events = 0
-        while max_events is None or n_events < int(max_events):
-            evt = self.bus.next_event()
-            n_events += 1
-            self.event_processor.on_event(evt)
+    def __process_event(self, evt):
+        matched_rules = self.__get_matched_rules(evt)
 
-    def get_rules(self):
-        return self.rules
+        for rule in matched_rules:
+            for action in rule['then']:
+                worker = self.__next_worker()
+                action.sign(evt)
+                worker.action_bus.post(action)
+
+    def __next_worker(self):
+        # XXX This is a circular list. Need to come out with a better
+        # scheduling algorithm for the workers based on how much work
+        # is stuck in their queue
+        return next(self.__workers_pool)
+
+    def __get_matched_rules(self, evt):
+        evt_class = get_full_class_name(evt)
+        if not evt_class in self.__rules_by_event_class:
+            # No rules associated to this event type
+            return []
+
+        rules_by_class = self.__rules_by_event_class[evt_class]
+        matched_rules = []
+
+        # Iterate over the match rules
+        for rule in rules_by_class:
+            for evt_filter in rule['when']:
+                if evt == evt_filter:
+                    matched_rules.append(rule)
+        return matched_rules
+
+    def start(self):
+        """
+        Start the components listed in the configuration and the engine main loop
+        """
+
+        self.bus = Bus()
+        self.__start_components()
+
+        n_events = 0
+        while self.__events_to_process is None or n_events < self.__events_to_process:
+            evt = self.bus.next()
+            n_events += 1
+            self.__process_event(evt)
+
+        # Shutdown the engine after all the events to process have been processed
+        self.shutdown()
+
+    def shutdown(self):
+        """
+        Shutdown the workers, the components, and eventually the engine
+        """
+
+        self.__shutdown_workers()
+        self.__shutdown_components()
+
+    def __shutdown_workers(self):
+        for worker in self.__workers:
+            worker.action_bus.post(StopEvent())
+
+    def __shutdown_components(self):
+        # TODO
+        pass
 
 # vim:sw=4:ts=4:et:
 

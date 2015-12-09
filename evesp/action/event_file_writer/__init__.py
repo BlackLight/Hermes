@@ -1,8 +1,8 @@
-from evesp.actuator import Actuator
+from evesp.action import Action
 
-class EventFileWriter(Actuator):
+class EventFileWriter(Action):
     """
-    Event file writer actuator. On event received,
+    Event file writer action. On event received,
     write the serialized event on the specified file.
 
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
@@ -16,9 +16,9 @@ class EventFileWriter(Actuator):
 
         super().__init__(filepath=filepath)
 
-    def on_event(self, event):
+    def run(self):
         with open(self.filepath, 'ab') as fp:
-            fp.write(event.serialize())
+            fp.write(self.event.serialize())
         fp.close()
 
 # vim:sw=4:ts=4:et:

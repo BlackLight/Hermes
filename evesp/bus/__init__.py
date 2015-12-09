@@ -1,35 +1,52 @@
-from queue import Queue
+from queue import Queue, Empty
 from time import time
 from threading import RLock
 
+class EmptyBus(Empty):
+    """
+    Exceptions raised when no object is on the bus. It wraps queue.Empty
+    """
+
 class Bus(object):
     """
-    EventBus main class
+    Bus main class
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, engine):
-        self.__evt_queue = Queue()
-        self.__evt_lock = RLock()
+    def __init__(self):
+        self.__queue = Queue()
+        self.__lock = RLock()
 
-    def post(self, event):
+    def post(self, obj):
         """
-        Post an event to the bus
+        Post an object to the bus
         """
 
-        event.timestamp = time()
-        self.__evt_lock.acquire()
+        obj.timestamp = time()
+        self.__lock.acquire()
 
         try:
-            self.__evt_queue.put((event))
+            self.__queue.put((obj))
         finally:
-            self.__evt_lock.release()
+            self.__lock.release()
 
-    def next_event(self):
+    def next(self, blocking=True, timeout=None):
         """
-        Return the next event on the bus
+        Return the next object on the bus.
+        blocking -- If True (default), next will return only when an object is available.
+        timeout -- In case of blocking call, wait for that number of seconds before returning to the called.
+            If None, it will wait undefinitely (default)
+
+        In case of non-blocking call or expired timeout, EmptyBus will be thrown
         """
-        return self.__evt_queue.get()
+
+        if blocking and timeout is None:
+            return self.__queue.get()
+        else:
+            try:
+                return self.__queue.get(blocking, timeout)
+            except Empty:
+                raise EmptyBus()
 
 # vim:sw=4:ts=4:et:
 

@@ -1,5 +1,6 @@
 import inspect
 import json
+from evesp.event import Event
 from evesp.utils import *
 
 class RulesParsingError(Exception):
@@ -28,7 +29,7 @@ class RulesParser(object):
 
     def __event_from_json(self, event):
         if not 'class' in event:
-            event['class'] = 'Event'
+            event['class'] = Event.__name__
         return event
 
     def __rule_from_json(self, rule, rule_idx):
@@ -48,7 +49,7 @@ class RulesParser(object):
 
         events = []
         for event in rule['when']:
-            event_class = event_class_by_class_name(event['class'] or 'Event')
+            event_class = event_class_by_class_name(event['class']) if 'class' in event else Event
             event_attributes = list(inspect.signature(event_class.__init__).parameters.keys())
             event_attributes.pop(0)  # Remove self
             filter_attributes = event['attributes'] if 'attributes' in event else {}
@@ -71,11 +72,11 @@ class RulesParser(object):
 
         actions = []
         for action in rule['then']:
-            actuator_class = actuator_class_by_class_name(action['class'] or 'Actuator')
-            actuator_attributes = list(inspect.signature(actuator_class.__init__).parameters.keys())
-            actuator_attributes.pop(0)  # Remove self
+            action_class = action_class_by_class_name(action['class'] or 'action')
+            action_attributes = list(inspect.signature(action_class.__init__).parameters.keys())
+            action_attributes.pop(0)  # Remove self
             init_arguments = action['arguments'] if 'arguments' in action else {}
-            actions.append(actuator_class(**(init_arguments)))
+            actions.append(action_class(**(init_arguments)))
 
         rule['then'] = actions
         return rule
