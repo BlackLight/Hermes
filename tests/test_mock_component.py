@@ -51,7 +51,7 @@ class TestMockComponent(unittest.TestCase):
                 except EOFError:
                     break
 
-        self.assertTrue(len(events) == 1)
+        self.assertEqual(len(events), 1)
         evt = events[0]
         self.assertTrue(isinstance(evt, MockEvent))
         self.assertEqual(evt.id, 1)

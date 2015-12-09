@@ -22,13 +22,19 @@ class Action(object):
         # The original event that triggered the action
         self.event = event
 
-    def run(self):
+    def on_event(self, event):
         """
         Execute the logic of the action.
         To be implemented by the derived classes.
         """
-
         raise NotImplementedError()
+
+    def run(self):
+        """
+        Shortcut for on_event invoked after the action has been signed,
+        therefore an event has already been attached to it.
+        """
+        self.on_event(self.event)
 
 # vim:sw=4:ts=4:et:
 

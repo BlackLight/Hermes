@@ -16,9 +16,9 @@ class EventFileWriter(Action):
 
         super().__init__(filepath=filepath)
 
-    def run(self):
+    def on_event(self, event):
         with open(self.filepath, 'ab') as fp:
-            fp.write(self.event.serialize())
+            fp.write(event.serialize())
         fp.close()
 
 # vim:sw=4:ts=4:et:

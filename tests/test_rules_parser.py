@@ -29,7 +29,7 @@ class TestRulesParser(unittest.TestCase):
         self.assertEqual(len(actions), 1)
 
         action = actions[0]
-        self.assertEqual(action.filepath, '/tmp/evesp_test.bin')
+        self.assertEqual(action.filepath, 'tests/events.bin')
 
 if __name__ == "__main__":
     unittest.main()
