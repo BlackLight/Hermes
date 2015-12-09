@@ -58,7 +58,10 @@ class TestMockComponent(unittest.TestCase):
         self.assertEqual(evt.name, 'Test event')
 
     def tearDown(self):
-        os.unlink(self.event_bin_file)
+        try:
+            os.unlink(self.event_bin_file)
+        except FileNotFoundError:
+            pass
 
 if __name__ == "__main__":
     unittest.main()
