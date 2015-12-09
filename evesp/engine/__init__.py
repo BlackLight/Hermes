@@ -145,7 +145,7 @@ class Engine(object):
         for rule in matched_rules:
             for action in rule['then']:
                 worker = self.__next_worker()
-                action.sign(evt)
+                action.link(evt)
                 worker.action_bus.post(action)
 
     def __next_worker(self):

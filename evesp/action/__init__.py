@@ -9,17 +9,16 @@ class Action(object):
     def __init__(self, **kwargs):
         vars(self).update(kwargs)
 
-    def sign(self, event):
+        # A unique ID that identifies the action along its lifecycle
+        self.__action_id = uuid.uuid4()
+
+    def link(self, event):
         """
-        An action is signed when the engine pushes it to a worker to be processed.
-        The signing process implies that a unique ID is generated for the action,
-        used to track it along its lifecycle, and the event that triggered the
-        action will be attached to the object.
+        Create a link between the action and the event processed by the engine
+        that triggered the action.
         """
 
-        self.action_id = uuid.uuid4()
-
-        # The original event that triggered the action
+        # The event that triggered the action
         self.event = event
 
     def on_event(self, event):
@@ -31,8 +30,8 @@ class Action(object):
 
     def run(self):
         """
-        Shortcut for on_event invoked after the action has been signed,
-        therefore an event has already been attached to it.
+        Shortcut for on_event invoked after the action has been linked to an
+        event by the engine,
         """
         self.on_event(self.event)
 
