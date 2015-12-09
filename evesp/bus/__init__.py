@@ -22,7 +22,7 @@ class Bus(object):
         Post an object to the bus
         """
 
-        obj.timestamp = time()
+        obj.__last_bus_transition_timestamp__ = time()
         self.__lock.acquire()
 
         try:
