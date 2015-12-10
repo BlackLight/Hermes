@@ -1,0 +1,3 @@
+- Tasker integration
+- REST API calls
+- Logging
