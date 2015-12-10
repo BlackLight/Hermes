@@ -107,7 +107,7 @@ class Engine(object):
 
             # Poll the value bus
             try:
-                ret_value = worker.value_bus.next(blocking=False, timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
+                ret_value = worker._value_bus.next(blocking=True, timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
 
                 ##
                 # TODO Do something with the value
@@ -136,7 +136,7 @@ class Engine(object):
             component = cls(name=name, **(self.config.components[name]))
             self.components[name] = component
 
-            component.register(self.bus)
+            component.register(self.__platform_bus)
             component.start()
 
     def __process_event(self, evt):
@@ -146,7 +146,7 @@ class Engine(object):
             for action in rule['then']:
                 worker = self.__next_worker()
                 action.link(evt)
-                worker.action_bus.post(action)
+                worker._action_bus.post(action)
 
     def __next_worker(self):
         # XXX This is a circular list. Need to come out with a better
@@ -175,12 +175,14 @@ class Engine(object):
         Start the components listed in the configuration and the engine main loop
         """
 
-        self.bus = Bus()
+        # Components will publish their events on the platform bus
+        self.__platform_bus = Bus()
+
         self.__start_components()
 
         n_events = 0
         while self.__events_to_process is None or n_events < self.__events_to_process:
-            evt = self.bus.next()
+            evt = self.__platform_bus.next()
             n_events += 1
             self.__process_event(evt)
 
@@ -197,11 +199,15 @@ class Engine(object):
 
     def __shutdown_workers(self):
         for worker in self.__workers:
-            worker.action_bus.post(StopEvent())
+            worker._action_bus.post(StopEvent())
 
     def __shutdown_components(self):
-        # TODO
-        pass
+        for component_name, component in self.components.items():
+            self.__shutdown_component(component)
+
+    def __shutdown_component(self, component):
+        # TODO Add log traces when sending stop events to components
+        component._ctrl_bus.post(StopEvent())
 
 # vim:sw=4:ts=4:et:
 

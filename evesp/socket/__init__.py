@@ -29,12 +29,12 @@ class Socket(object):
         bus -- Component bus where the events will be pushed
         """
 
-        self.instance.bus = bus
+        self.instance.__bus = bus
         self.__thread = Thread(target = self.instance.run)
         self.__thread.start()
 
     def close(self):
-        # TBD
+        # TODO
         raise NotImplementedError()
 
     def fire_event(self, event):
@@ -42,7 +42,7 @@ class Socket(object):
         Send an event to the component bus
         """
 
-        self.bus.post(event)
+        self.__bus.post(event)
 
 # vim:sw=4:ts=4:et:
 

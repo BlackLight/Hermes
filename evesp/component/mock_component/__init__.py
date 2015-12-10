@@ -14,8 +14,8 @@ class MockComponent(Component):
 
     def run(self):
         sock = MockSocket()
-        sock.connect(self.component_bus)
+        sock.connect(self._component_bus)
 
-        evt = self.component_bus.next(blocking=True, timeout=1)
+        evt = self._component_bus.next()
         self.fire_event(evt)
 
