@@ -47,6 +47,8 @@ class Engine(object):
         if not self.__parsed_engine_config:
             raise AttributeError('The configuration file has no __engine module configuration')
 
+        self.__create_worker_pool()
+
     @classmethod
     def __is_engine_comp_name(cls, comp_name):
         return comp_name == '__engine'
@@ -57,10 +59,10 @@ class Engine(object):
         ##
         # n_workers
         ##
-        n_workers = self.__DEFAULT_WORKERS
+        self.__n_workers = self.__DEFAULT_WORKERS
         if 'workers' in component:
             assert component['workers'].isnumeric()
-            n_workers = int(component['workers'])
+            self.__n_workers = int(component['workers'])
 
         ##
         # events_to_process
@@ -70,8 +72,6 @@ class Engine(object):
             assert component['events_to_process'].isnumeric()
             self.__events_to_process = int(component['events_to_process'])
 
-        self.__create_worker_pool(n_workers)
-
         ##
         # rules_file
         ##
@@ -80,8 +80,8 @@ class Engine(object):
 
         self.__create_event_map(rules_file)
 
-    def __create_worker_pool(self, n_workers):
-        workers = [Worker() for worker in range(0, n_workers)]
+    def __create_worker_pool(self):
+        workers = [Worker() for worker in range(0, self.__n_workers)]
         self.__workers = workers
 
         for worker in workers:
