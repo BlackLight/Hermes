@@ -8,7 +8,7 @@ conf_file_path = os.path.join(os.getenv('HOME'), '.config', 'evesp')
 
 setup(
     name = "evesp",
-    # version = "TBD",
+    # version = "N/A",
     # install_requires = ['PyDispatcher>=2.0.5'],
     author = "Fabio Manganiello",
     author_email = "blacklight86@gmail.com",
