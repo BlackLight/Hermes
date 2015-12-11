@@ -117,7 +117,7 @@ class Engine(object):
                 pass
 
             if self.__workers:
-                worker_idx %= (len(self.__workers)+1)
+                worker_idx %= (len(self.__workers))
 
     def __create_event_map(self, rules_file):
         self.__rules_file = rules_file
