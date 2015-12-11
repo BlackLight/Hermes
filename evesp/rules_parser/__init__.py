@@ -21,6 +21,7 @@ class RulesParser(object):
     def __parse_rules(self):
         self.__rules = []
         self.__rules_by_event_class = {}
+        self.__startup_actions = []
 
         for rule in self.__root:
             self.__rules.append(
@@ -33,19 +34,23 @@ class RulesParser(object):
         return event
 
     def __rule_from_json(self, rule, rule_idx):
-        self.__parse_rule_when_attribute(rule, rule_idx)
         self.__parse_rule_then_attribute(rule, rule_idx)
+        self.__parse_rule_when_attribute(rule, rule_idx)
         return rule
 
     def __parse_rule_when_attribute(self, rule, rule_idx):
         from evesp.event import Event, AttributeValueAny
 
-        if not 'when' in rule:
-            raise RulesParsingError('Rule #%d has no "when" attribute' % rule_idx)
-
-        if not isinstance(rule['when'], list):
-            raise RulesParsingError('Expected [list] for rule #%d when attribute, got [%s]'
-                % (rule_idx, type(rule['when']).__name__))
+        if 'when' in rule:
+            if not isinstance(rule['when'], list):
+                raise RulesParsingError('Expected [list] for rule #%d when attribute, got [%s]'
+                    % (rule_idx, type(rule['when']).__name__))
+        else:
+            # Start-up rule, executed when the engine is started: no 'when'
+            # conditions on the actions.
+            rule['when'] = []
+            self.__startup_actions.append(rule['then'])
+            return rule
 
         events = []
         for event in rule['when']:
