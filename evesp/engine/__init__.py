@@ -1,7 +1,9 @@
 from itertools import cycle
 from threading import Thread
 
+from evesp.action import StopAction
 from evesp.bus import Bus, EmptyBus
+from evesp.bus.event_bus import EventBus
 from evesp.component import Component
 from evesp.event import Event, StopEvent
 from evesp.rules_parser import RulesParser
@@ -144,8 +146,8 @@ class Engine(object):
 
         for rule in matched_rules:
             for action in rule['then']:
-                worker = self.__next_worker()
                 action.link(evt)
+                worker = self.__next_worker()
                 worker._action_bus.post(action)
 
     def __next_worker(self):
@@ -176,7 +178,7 @@ class Engine(object):
         """
 
         # Components will publish their events on the platform bus
-        self.__platform_bus = Bus()
+        self.__platform_bus = EventBus()
 
         self.__start_components()
 
@@ -199,7 +201,7 @@ class Engine(object):
 
     def __shutdown_workers(self):
         for worker in self.__workers:
-            worker._action_bus.post(StopEvent())
+            worker._action_bus.post(StopAction())
 
     def __shutdown_components(self):
         for component_name, component in self.components.items():
@@ -207,7 +209,7 @@ class Engine(object):
 
     def __shutdown_component(self, component):
         # TODO Add log traces when sending stop events to components
-        component._ctrl_bus.post(StopEvent())
+        component._ctrl_bus.post(StopAction())
 
 # vim:sw=4:ts=4:et:
 

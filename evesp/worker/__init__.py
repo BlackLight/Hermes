@@ -1,8 +1,9 @@
 from enum import Enum
 from threading import Thread
 
-from evesp.action import Action
+from evesp.action import Action, StopAction
 from evesp.bus import Bus
+from evesp.bus.action_bus import ActionBus
 from evesp.event import StopEvent
 from evesp.utils import *
 
@@ -47,7 +48,7 @@ class Worker(object):
         """
 
         self.state = WorkerState.not_initialized
-        self._action_bus = Bus()
+        self._action_bus = ActionBus()
         self._value_bus = Bus()
         self.state = WorkerState.initialized
 
@@ -72,17 +73,25 @@ class Worker(object):
             act = self._action_bus.next()
             n_actions += 1
 
-            if isinstance(act, StopEvent):
-                # If the worker received a stop event from the bus, exit immediately
-                self.state = WorkerState.stopped
+            assert isinstance(act, Action)
+            if isinstance(act, StopAction):
+                # If the worker received a stop action from the bus, exit immediately
+                self.stop()
                 break
 
-            assert isinstance(act, Action)
             act.run()
 
             # #### #
             # TODO #
             # #### #
+
+    def stop(self):
+        """
+        Worker stop
+        """
+
+        self._value_bus.post(StopEvent())
+        self.state = WorkerState.stopped
 
 # vim:sw=4:ts=4:et:
 

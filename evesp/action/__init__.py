@@ -65,5 +65,11 @@ class Action(object):
         self.on_event(self.event)
         self.__timestamps[ActionState.end] = time.time()
 
+class StopAction(Action):
+    """
+    A special action used to asynchronously stop components, workers and sockets
+    Fabio Manganiello, 2015 <blacklight86@gmail.com>
+    """
+
 # vim:sw=4:ts=4:et:
 

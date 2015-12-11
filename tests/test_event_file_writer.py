@@ -7,7 +7,7 @@ from evesp.action.event_file_writer import EventFileWriter
 class TestEventFileWriter(unittest.TestCase):
     def setUp(self):
         basedir = os.path.dirname(os.path.realpath(__file__))
-        self.events_file = os.path.join(basedir, 'events.bin')
+        self.events_file = os.path.join(basedir, 'events_file.bin')
         self.evt = MockEvent(id=1, name='foo')
         self.fw = EventFileWriter(self.events_file)
 

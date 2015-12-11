@@ -1,7 +1,9 @@
 from threading import Thread
 
+from evesp.action import StopAction
 from evesp.bus import Bus
-from evesp.event import StopEvent
+from evesp.bus.event_bus import EventBus, Bus
+from evesp.event import Event
 
 class Component(object):
     """
@@ -30,7 +32,7 @@ class Component(object):
         #
         # Your component can manage this bus internally for any purposes - e.g.
         # sockets and internal events
-        self._component_bus = Bus()
+        self._component_bus = EventBus()
 
         # Direction: engine -> component
         #
@@ -58,7 +60,7 @@ class Component(object):
             self.__process_engine_event(evt)
 
     def __process_engine_event(self, evt):
-        if isinstance(evt, StopEvent):
+        if isinstance(evt, StopAction):
             self.stop()
 
     def start(self):
@@ -89,10 +91,8 @@ class Component(object):
         Set the component field on the event before posting it to the bus
         """
 
-        # A component cannot fire a stop event to the engine
-        assert not isinstance(event, StopEvent)
-
-        event.component = self.name
+        assert isinstance(event, Event)
+        event._component = self.name
         self.__platform_bus.post(event)
 
 # vim:sw=4:ts=4:et:
