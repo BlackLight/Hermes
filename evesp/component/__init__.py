@@ -85,6 +85,9 @@ class Component(object):
         # hanging
         # ####
 
+    def is_stopped(self):
+        return self.__stopped
+
     def fire_event(self, event):
         """
         Standard API for firing events

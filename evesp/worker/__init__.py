@@ -47,10 +47,10 @@ class Worker(object):
         original action IDs.
         """
 
-        self.state = WorkerState.not_initialized
+        self.__state = WorkerState.not_initialized
         self._action_bus = ActionBus()
         self._value_bus = Bus()
-        self.state = WorkerState.initialized
+        self.__state = WorkerState.initialized
 
     def start(self, actions_to_run=None):
         """
@@ -61,12 +61,12 @@ class Worker(object):
         bus to process.
         """
 
-        self.state = WorkerState.starting
+        self.__state = WorkerState.starting
         self.__thread = Thread(target = self.__run, args=[actions_to_run])
         self.__thread.start()
 
     def __run(self, actions_to_run):
-        self.state = WorkerState.running
+        self.__state = WorkerState.running
         n_actions = 0
 
         while actions_to_run is None or n_actions < actions_to_run:
@@ -91,7 +91,10 @@ class Worker(object):
         """
 
         self._value_bus.post(StopEvent())
-        self.state = WorkerState.stopped
+        self.__state = WorkerState.stopped
+
+    def get_state(self):
+        return self.__state
 
 # vim:sw=4:ts=4:et:
 

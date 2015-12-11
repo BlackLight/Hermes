@@ -29,6 +29,7 @@ class Engine(object):
         config -- evesp.config.Config object
         """
 
+        self.__stopped = False
         self.config = config
         self.components = {}
         self.__classes = {}
@@ -102,7 +103,7 @@ class Engine(object):
         worker_idx = 0
         while self.__workers:
             worker = self.__workers[worker_idx]
-            if worker.state == WorkerState.stopped:
+            if worker.get_state() == WorkerState.stopped:
                 # Remove the stopped worker from the list and update the pool
                 del self.__workers[worker_idx]
                 self.__workers_pool = cycle(self.__workers)
@@ -189,15 +190,19 @@ class Engine(object):
             self.__process_event(evt)
 
         # Shutdown the engine after all the events to process have been processed
-        self.shutdown()
+        self.stop()
 
-    def shutdown(self):
+    def stop(self):
         """
         Shutdown the workers, the components, and eventually the engine
         """
 
+        self.__stopped = True
         self.__shutdown_workers()
         self.__shutdown_components()
+
+    def is_stopped(self):
+        return self.__stopped
 
     def __shutdown_workers(self):
         for worker in self.__workers:
