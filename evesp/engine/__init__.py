@@ -71,38 +71,35 @@ class Engine(object):
     def __is_engine_comp_name(cls, comp_name):
         return comp_name == '__engine'
 
-    def __parse_engine_comp_config(self, component):
-        self.__parsed_engine_config = True
-
-        ##
-        # n_workers
-        ##
+    def __engine_parse_n_workers(self, config):
         self.__n_workers = self.__DEFAULT_WORKERS
-        if 'workers' in component:
-            assert component['workers'].isnumeric()
-            self.__n_workers = int(component['workers'])
+        if 'workers' in config:
+            assert config['workers'].isnumeric()
+            self.__n_workers = int(config['workers'])
 
-        ##
-        # events_to_process
-        ##
+    def __engine_parse_events_to_process(self, config):
         self.__events_to_process = None
-        if 'events_to_process' in component:
-            assert component['events_to_process'].isnumeric()
-            self.__events_to_process = int(component['events_to_process'])
+        if 'events_to_process' in config:
+            assert config['events_to_process'].isnumeric()
+            self.__events_to_process = int(config['events_to_process'])
 
-        ##
-        # rules_file
-        ##
-        assert 'rules_file' in component
-        rules_file = component['rules_file']
+    def __engine_parse_rules_file(self, config):
+        assert 'rules_file' in config
+        rules_file = config['rules_file']
         self.__create_event_map(rules_file)
 
-        ##
-        # track_actions
-        ##
+    def __engine_parse_track_actions(self, config):
         self.__track_actions = self.__DEFAULT_TRACK_ACTIONS
-        if 'track_actions' in component:
-            self.__track_actions = bool(component['track_actions'])
+        if 'track_actions' in config:
+            self.__track_actions = bool(config['track_actions'])
+
+    def __parse_engine_comp_config(self, config):
+        self.__parsed_engine_config = True
+
+        self.__engine_parse_n_workers(config)
+        self.__engine_parse_events_to_process(config)
+        self.__engine_parse_rules_file(config)
+        self.__engine_parse_track_actions(config)
 
     def __create_worker_pool(self):
         workers = [Worker() for worker in range(0, self.__n_workers)]
