@@ -48,5 +48,11 @@ class Bus(object):
             except Empty:
                 raise EmptyBus()
 
+    def __len__(self):
+        """
+        Return the number of elements currently on the bus
+        """
+        return self.__queue.qsize()
+
 # vim:sw=4:ts=4:et:
 

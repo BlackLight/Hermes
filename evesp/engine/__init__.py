@@ -1,14 +1,24 @@
-from itertools import cycle
-from threading import Thread
+import threading
 
-from evesp.action import StopAction
+from enum import Enum
+from itertools import cycle
+
+from evesp.action import ActionResponse, StopAction
 from evesp.bus import Bus, EmptyBus
 from evesp.bus.event_bus import EventBus
 from evesp.component import Component
 from evesp.event import Event, StopEvent
 from evesp.rules_parser import RulesParser
 from evesp.utils import *
-from evesp.worker import Worker, WorkerState
+from evesp.worker import Worker
+
+class EngineState(Enum):
+    Initializing = 'Initializing',
+    Ready = 'Ready',
+    Running = 'Running',
+    StoppingComponents = 'Stopping Components',
+    StoppingWorkers = 'Stopping Workers',
+    Stopped = 'Stopped'
 
 class Engine(object):
     """
@@ -22,16 +32,21 @@ class Engine(object):
     # The supervisor by default polls the workers' value bus each 0.01 seconds
     __DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD = 0.01
 
-    def __init__(self, config):
+    # Keep track of actions responses even when the actions are completed (default: False)
+    __DEFAULT_TRACK_ACTIONS = False
+
+    def __init__(self, config, atexit_callback=None):
         """
         Constructor
 
         config -- evesp.config.Config object
+        atexit_callback -- Optional method to invoke when the engine has stopped
         """
 
-        self.__stopped = False
+        self.__state = EngineState.Stopped
         self.config = config
         self.components = {}
+        self.__atexit_callback = atexit_callback
         self.__classes = {}
         self.__parsed_engine_config = False
 
@@ -50,6 +65,7 @@ class Engine(object):
         if not self.__parsed_engine_config:
             raise AttributeError('The configuration file has no __engine module configuration')
 
+        self.__actions = {}
         self.__create_worker_pool()
 
     @classmethod
@@ -80,8 +96,14 @@ class Engine(object):
         ##
         assert 'rules_file' in component
         rules_file = component['rules_file']
-
         self.__create_event_map(rules_file)
+
+        ##
+        # track_actions
+        ##
+        self.__track_actions = self.__DEFAULT_TRACK_ACTIONS
+        if 'track_actions' in component:
+            self.__track_actions = bool(component['track_actions'])
 
     def __create_worker_pool(self):
         workers = [Worker() for worker in range(0, self.__n_workers)]
@@ -95,32 +117,40 @@ class Engine(object):
 
         # Workers supervisor thread. It polls the workers' value bus and eventually
         # reacts when values are ready, and stops the workers in case the engine
-        # sets the shutdown flag.
-        self.__workers_supervisor = Thread(target = self.__run_workers_supervisor)
+        # sets the stop flag.
+        self.__workers_supervisor = threading.Thread(target = self.__run_workers_supervisor)
         self.__workers_supervisor.start()
 
     def __run_workers_supervisor(self):
-        worker_idx = 0
-        while self.__workers:
-            worker = self.__workers[worker_idx]
-            if worker.get_state() == WorkerState.stopped:
-                # Remove the stopped worker from the list and update the pool
-                del self.__workers[worker_idx]
-                self.__workers_pool = cycle(self.__workers)
+        # Internal object to synchronize on the supervisor exit
+        self.__supervisor_exited = threading.Event()
 
-            # Poll the value bus
+        self.__stopped_workers = {}
+        for worker in self.__workers_pool:
             try:
-                ret_value = worker._value_bus.next(blocking=True, timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
+                # Thread exit if all the workers have been stopped
+                if len(self.__stopped_workers.keys()) == len(self.__workers): break
 
-                ##
-                # TODO Do something with the value
-                ##
+                action_response = worker._value_bus.next(blocking=True, timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
+                if isinstance(action_response, ActionResponse):
+                    self.__process_action_response(action_response)
+                elif isinstance(action_response, StopEvent):
+                    self.__on_worker_stop(worker)
+            except EmptyBus: continue
 
-            except EmptyBus:
-                pass
+        self.__supervisor_exited.set()
 
-            if self.__workers:
-                worker_idx %= (len(self.__workers))
+    def __process_action_response(self, action_response):
+        action = action_response.get_action()
+        action_id = action.get_id()
+
+        if action_id in self.__actions:
+            if self.__track_actions:
+                self.__actions[action_id] = action_response
+            else: del self.__actions[action_id]
+
+    def __on_worker_stop(self, worker):
+        self.__stopped_workers[worker.get_id()] = worker
 
     def __create_event_map(self, rules_file):
         self.__rules_file = rules_file
@@ -146,15 +176,14 @@ class Engine(object):
         matched_rules = self.__get_matched_rules(evt)
 
         for rule in matched_rules:
-            for action in rule['then']:
-                action.link(evt)
+            for action_tmpl in rule['then']:
+                action = action_tmpl.link(evt)
+                self.__actions[action.get_id()] = action
+
                 worker = self.__next_worker()
                 worker._action_bus.post(action)
 
     def __next_worker(self):
-        # XXX This is a circular list. Need to come out with a better
-        # scheduling algorithm for the workers based on how much work
-        # is stuck in their queue
         return next(self.__workers_pool)
 
     def __get_matched_rules(self, evt):
@@ -189,32 +218,54 @@ class Engine(object):
             n_events += 1
             self.__process_event(evt)
 
-        # Shutdown the engine after all the events to process have been processed
+        # Stop the engine after all the events to process have been processed
         self.stop()
 
     def stop(self):
         """
-        Shutdown the workers, the components, and eventually the engine
+        Stop the workers, the components, and eventually the engine
         """
 
-        self.__stopped = True
-        self.__shutdown_workers()
-        self.__shutdown_components()
+        self.__stop_components()
+        self.__stop_workers()
+        self.__supervisor_exited.wait()
+        self.__state = EngineState.Stopped
+
+        if self.__atexit_callback: self.__atexit_callback()
 
     def is_stopped(self):
-        return self.__stopped
+        return self.__state == EngineState.Stopped
 
-    def __shutdown_workers(self):
+    def __notify_worker_stop(self, worker):
+        worker._action_bus.post(StopAction())
+
+    def __stop_workers(self):
+        self.__state = EngineState.StoppingWorkers
         for worker in self.__workers:
-            worker._action_bus.post(StopAction())
+            self.__notify_worker_stop(worker)
 
-    def __shutdown_components(self):
+        for worker in self.__workers:
+            worker.wait_stop()
+
+    def __stop_components(self):
+        self.__state = EngineState.StoppingComponents
         for component_name, component in self.components.items():
-            self.__shutdown_component(component)
+            self.__stop_component(component)
 
-    def __shutdown_component(self, component):
-        # TODO Add log traces when sending stop events to components
+    def __stop_component(self, component):
         component._ctrl_bus.post(StopAction())
+
+    def _get_actions(self):
+        """
+        In case track_actions is False (default), this would return a map
+        action_id => Action, containing all the actions currently queued.
+
+        In case track_actions is True (default), this would return a map
+        action_id => Action for the actions currently queued, and action_id =>
+        ActionResponse for the ones that were completed.
+        """
+
+        return self.__actions
 
 # vim:sw=4:ts=4:et:
 

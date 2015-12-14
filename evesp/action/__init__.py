@@ -22,23 +22,33 @@ class Action(object):
 
     def __init__(self, **kwargs):
         vars(self).update(kwargs)
-
-        # A unique ID that identifies the action along its lifecycle
-        self.__action_id = uuid.uuid4()
+        self.__kwargs = dict(kwargs)
 
         # Map of the timestamps for the states of the action
         self.__timestamps = dict(map(lambda state: (state, None), [state for state in ActionState]))
         self.__timestamps[ActionState.create] = time.time()
 
+    def get_id(self):
+        return self.__action_id
+
     def link(self, event):
         """
         Create a link between the action and the event processed by the engine
-        that triggered the action.
+        that triggered the action. It returns a new action instance to be
+        executed.
         """
 
+        action = self.__class__(**(self.__kwargs))
+
         # The event that triggered the action
-        self.event = event
-        self.__timestamps[ActionState.link] = time.time()
+        action.event = event
+
+        # A unique ID that identifies the action along now that it's been linked
+        action.__action_id = str(uuid.uuid4())
+
+        # Store the link timestamp
+        action.__timestamps[ActionState.link] = time.time()
+        return action
 
     def on_event(self, event):
         """
@@ -62,12 +72,42 @@ class Action(object):
         event by the engine,
         """
         self.__timestamps[ActionState.start] = time.time()
-        self.on_event(self.event)
+        ret = self.on_event(self.event)
         self.__timestamps[ActionState.end] = time.time()
+
+        return ret
 
 class StopAction(Action):
     """
     A special action used to asynchronously stop components, workers and sockets
+    Fabio Manganiello, 2015 <blacklight86@gmail.com>
+    """
+
+class ActionResponse(object):
+    """
+    ActionResponse object, containing the originating action and the return value
+    Fabio Manganiello, 2015 <blacklight86@gmail.com>
+    """
+
+    def __init__(self, action, response):
+        self.__action = action
+        self.__response = response
+
+    def get_action(self):
+        return self.__action
+
+    def get_response(self):
+        return self.__response
+
+class SuccessActionResponse(ActionResponse):
+    """
+    ActionResponse object in case of successful function call
+    Fabio Manganiello, 2015 <blacklight86@gmail.com>
+    """
+
+class ErrorActionResponse(ActionResponse):
+    """
+    ActionResponse object in case of failed function call
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
