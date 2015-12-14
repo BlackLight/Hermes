@@ -1,0 +1,23 @@
+[
+    {
+        "label": "Test rule 1",
+        "when": [
+            {
+                "class": "MockEvent",
+                "attributes": {
+                    "id": 1
+                }
+            }
+        ],
+
+        "then": [
+            {
+                "class": "RandomDelayEventFileWriter",
+                "arguments": {
+                    "filepath": "tests/events.bin"
+                }
+            }
+        ]
+    }
+]
+
