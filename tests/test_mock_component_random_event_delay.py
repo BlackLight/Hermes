@@ -5,13 +5,13 @@ import threading
 import time
 import unittest
 
-from evesp.action import SuccessActionResponse
-from evesp.component.mock_component import MockComponent
+from evesp.action import ActionResponse, SuccessActionResponse
+from evesp.component.random_delay_mock_component import RandomDelayMockComponent
 from evesp.config import Config
 from evesp.engine import Engine
 from evesp.event.mock_event import MockEvent
 
-class TestMockComponentMultipleEvents(unittest.TestCase):
+class TestMockComponent(unittest.TestCase):
     comp_name = 'My Mock Component'
     event_bin_file = os.path.join('tests', 'events.bin')
     n_events = 10
@@ -24,7 +24,7 @@ class TestMockComponentMultipleEvents(unittest.TestCase):
         self.engine_stopped = threading.Event()
 
         basedir = os.path.dirname(os.path.realpath(__file__))
-        config_file = os.path.join(basedir, 'conf', 'test_mock_component_multiple_events.conf')
+        config_file = os.path.join(basedir, 'conf', 'test_mock_component_random_event_delay.conf')
         self.engine = Engine( config = Config(config_file), atexit_callback = self.__on_engine_exit )
         self.engine.start()
 
@@ -36,7 +36,7 @@ class TestMockComponentMultipleEvents(unittest.TestCase):
 
         self.assertTrue(self.comp_name in self.engine.components)
         component = self.engine.components[self.comp_name]
-        self.assertTrue(isinstance(component, MockComponent))
+        self.assertTrue(isinstance(component, RandomDelayMockComponent))
         self.assertTrue(os.path.isfile(self.event_bin_file))
 
         with open(self.event_bin_file, 'rb') as fp:

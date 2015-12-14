@@ -1,7 +1,6 @@
-import threading
-
 from enum import Enum
 from itertools import cycle
+from threading import Thread, Event as ThreadEvent
 
 from evesp.action import ActionResponse, StopAction
 from evesp.bus import Bus, EmptyBus
@@ -118,15 +117,16 @@ class Engine(object):
         # Workers supervisor thread. It polls the workers' value bus and eventually
         # reacts when values are ready, and stops the workers in case the engine
         # sets the stop flag.
-        self.__workers_supervisor = threading.Thread(target = self.__run_workers_supervisor)
+        self.__workers_supervisor = Thread(target = self.__run_workers_supervisor)
         self.__workers_supervisor.start()
 
     def __run_workers_supervisor(self):
         # Internal object to synchronize on the supervisor exit
-        self.__supervisor_exited = threading.Event()
+        self.__supervisor_exited = ThreadEvent()
 
         self.__stopped_workers = {}
-        for worker in self.__workers_pool:
+        workers_pool = cycle(self.__workers_pool)
+        for worker in workers_pool:
             try:
                 # Thread exit if all the workers have been stopped
                 if len(self.__stopped_workers.keys()) == len(self.__workers): break

@@ -1,4 +1,4 @@
-from evesp.socket.mock_socket import MockSocket
+from evesp.socket.mock_socket import MockSocket, RandomDelayMockSocket
 from evesp.component import Component
 
 class MockComponent(Component):
@@ -15,14 +15,15 @@ class MockComponent(Component):
         """
 
         super().__init__(instance=self, name=name)
-        self.__n_events = int(n_events)
+        self._n_events = int(n_events)
 
     def run(self):
-        sock = MockSocket(n_events=self.__n_events)
+        sock = MockSocket(n_events=self._n_events)
+
         sock.connect(self._component_bus)
         processed_events = 0
 
-        while processed_events < self.__n_events:
+        while processed_events < self._n_events:
             evt = self._component_bus.next()
             self.fire_event(evt)
             processed_events += 1
