@@ -1,0 +1,20 @@
+[
+    {
+        "label": "Test modification of a mock file",
+        "when": [
+            {
+                "class": "FileSystemEvent"
+            }
+        ],
+
+        "then": [
+            {
+                "class": "EventFileWriter",
+                "arguments": {
+                    "filepath": "tests/events.bin"
+                }
+            }
+        ]
+    }
+]
+
