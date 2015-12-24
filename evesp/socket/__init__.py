@@ -6,19 +6,17 @@ class Socket(object):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, instance, config = {}):
+    def __init__(self, instance):
         """
         Initialize the common property for a socket
 
         instance  -- Instance of Socket to be started - used to invoke the run method
-        config -- Socket configuration
         """
 
         if isinstance(instance, self.__class__) is False:
             raise AttributeError('Got [%s] instance, expected an instance of [%s]' % (type(instance), type(self)))
 
         self.instance = instance
-        self.config = config
 
     def connect(self, bus):
         """
@@ -34,8 +32,10 @@ class Socket(object):
         self.__thread.start()
 
     def close(self):
-        # TODO
-        raise NotImplementedError()
+        """
+        Clean socket cleanup. To be implemented by derived classes.
+        """
+        pass
 
     def fire_event(self, event):
         """
