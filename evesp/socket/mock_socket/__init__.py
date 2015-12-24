@@ -11,8 +11,8 @@ class MockSocket(Socket):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, config={}, n_events=1):
-        super().__init__(instance=self, config=config)
+    def __init__(self, n_events=1):
+        super().__init__(instance=self)
         self._n_events = n_events
 
     def run(self):
@@ -29,11 +29,11 @@ class RandomDelayMockSocket(MockSocket):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, config={}, n_events=1, max_rnd_delay=1):
+    def __init__(self, n_events=1, max_rnd_delay=1):
         """
         max_rnd_delay -- Maximum number of seconds for the calculation of the random delay between two events
         """
-        super().__init__(config=config, n_events=n_events)
+        super().__init__(n_events=n_events)
         self.__max_rnd_delay = max_rnd_delay
 
     def run(self):
