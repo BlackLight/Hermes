@@ -42,8 +42,12 @@ class Engine(object):
         atexit_callback -- Optional method to invoke when the engine has stopped
         """
 
-        self.__state = EngineState.Stopped
+        self.__state = EngineState.Initializing
         self.config = config
+
+        # Event object use to synchronize the threads when the engine enters "Running" state
+        self.__engine_running = ThreadEvent()
+
         self.components = {}
         self.__atexit_callback = atexit_callback
         self.__classes = {}
@@ -66,6 +70,7 @@ class Engine(object):
 
         self.__actions = {}
         self.__create_worker_pool()
+        self.__state = EngineState.Ready
 
     @classmethod
     def __is_engine_comp_name(cls, comp_name):
@@ -123,6 +128,7 @@ class Engine(object):
 
         self.__stopped_workers = {}
         workers_pool = cycle(self.__workers_pool)
+
         for worker in workers_pool:
             try:
                 # Thread exit if all the workers have been stopped
@@ -208,6 +214,8 @@ class Engine(object):
         self.__platform_bus = EventBus()
 
         self.__start_components()
+        self.__state = EngineState.Running
+        self.__engine_running.set()
 
         n_events = 0
         while self.__events_to_process is None or n_events < self.__events_to_process:
@@ -232,6 +240,9 @@ class Engine(object):
 
     def is_stopped(self):
         return self.__state == EngineState.Stopped
+
+    def wait_running(self):
+        self.__engine_running.wait()
 
     def __notify_worker_stop(self, worker):
         worker._action_bus.post(StopAction())
