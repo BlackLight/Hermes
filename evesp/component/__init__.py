@@ -11,12 +11,13 @@ class Component(object):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, instance, name, config = {}):
+    def __init__(self, instance, name, n_events=None, config = {}):
         """
         Initialize the common property for a component
 
         instance  -- Instance of Component to be started - used to invoke the run method
         name -- Component unique name
+        n_events -- Number of events to fire to the engine before exiting (default: None, loop forever)
         config -- Component configuration as a dictionary
         """
 
@@ -26,6 +27,7 @@ class Component(object):
         self.__stopped = False
         self.name = name
         self.instance = instance
+        self.n_events = int(n_events) if n_events else None
         self.config = config
 
         # Direction: component [internal]
@@ -77,13 +79,6 @@ class Component(object):
         Clean shutdown method
         """
         self.__stopped = True
-
-        # ####
-        # TODO Manage shutdown conciliation with the engine, queues of pending
-        # events to push to the __platform_bus before the shutdown is completed,
-        # and eventually thread signals and kills in case the component is
-        # hanging
-        # ####
 
     def is_stopped(self):
         return self.__stopped

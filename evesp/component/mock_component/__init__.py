@@ -14,16 +14,15 @@ class MockComponent(Component):
         n_events -- Number of events to fire to the engine
         """
 
-        super().__init__(instance=self, name=name)
-        self._n_events = int(n_events)
+        super().__init__(instance=self, name=name, n_events=n_events)
 
     def run(self):
-        sock = MockSocket(n_events=self._n_events)
+        sock = MockSocket(n_events=self.n_events)
 
         sock.connect(self._component_bus)
         processed_events = 0
 
-        while processed_events < self._n_events:
+        while processed_events < self.n_events:
             evt = self._component_bus.next()
             self.fire_event(evt)
             processed_events += 1

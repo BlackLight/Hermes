@@ -16,11 +16,11 @@ class RandomDelayMockComponent(MockComponent):
         self.__max_rnd_delay = float(max_rnd_delay)
 
     def run(self):
-        sock = RandomDelayMockSocket(n_events=self._n_events, max_rnd_delay=self.__max_rnd_delay)
+        sock = RandomDelayMockSocket(n_events=self.n_events, max_rnd_delay=self.__max_rnd_delay)
         sock.connect(self._component_bus)
         processed_events = 0
 
-        while processed_events < self._n_events:
+        while processed_events < self.n_events:
             evt = self._component_bus.next()
             self.fire_event(evt)
             processed_events += 1
