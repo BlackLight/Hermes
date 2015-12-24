@@ -1,5 +1,5 @@
-from evesp.bus import Bus
-from evesp.action import Action
+from . import Bus
+from ..action import Action
 
 class ActionBus(Bus):
     """

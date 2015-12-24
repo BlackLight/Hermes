@@ -1,7 +1,7 @@
 import re
 
-from evesp.socket.inotify_socket import InotifySocket
-from evesp.component import Component
+from ...socket.inotify_socket import InotifySocket
+from .. import Component
 
 class FileSystemEventComponent(Component):
     """

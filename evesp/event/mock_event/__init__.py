@@ -1,4 +1,4 @@
-from evesp.event import Event
+from .. import Event
 
 class MockEvent(Event):
     """

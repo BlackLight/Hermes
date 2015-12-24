@@ -1,5 +1,5 @@
-from evesp.bus import Bus
-from evesp.event import Event
+from . import Bus
+from ..event import Event
 
 class EventBus(Bus):
     """

@@ -3,11 +3,11 @@ from threading import Thread, RLock
 from time import sleep
 from uuid import uuid4
 
-from evesp.action import *
-from evesp.bus import Bus
-from evesp.bus.action_bus import ActionBus
-from evesp.event import StopEvent
-from evesp.utils import *
+from ..action import *
+from ..bus import Bus
+from ..bus.action_bus import ActionBus
+from ..event import StopEvent
+from ..utils import *
 
 class WorkerState(Enum):
     Initializing = 'Initializing'

@@ -1,7 +1,7 @@
 import random
 import time
 
-from evesp.action.event_file_writer import EventFileWriter
+from ..event_file_writer import EventFileWriter
 
 class RandomDelayEventFileWriter(EventFileWriter):
     """

@@ -1,5 +1,5 @@
-from evesp.socket.mock_socket import RandomDelayMockSocket
-from evesp.component.mock_component import MockComponent
+from ...socket.mock_socket import RandomDelayMockSocket
+from ..mock_component import MockComponent
 
 class RandomDelayMockComponent(MockComponent):
     """

@@ -1,8 +1,8 @@
 import random
 import time
 
-from evesp.event import mock_event
-from evesp.socket import Socket
+from ...event.mock_event import MockEvent
+from .. import Socket
 
 class MockSocket(Socket):
     """
@@ -18,7 +18,7 @@ class MockSocket(Socket):
     def run(self):
         processed_events = 0
         while processed_events < self._n_events:
-            evt = mock_event.MockEvent(id=1, name='Test event')
+            evt = MockEvent(id=1, name='Test event')
             self.fire_event(evt)
             processed_events += 1
 
@@ -40,7 +40,7 @@ class RandomDelayMockSocket(MockSocket):
         processed_events = 0
         while processed_events < self._n_events:
             time.sleep(random.uniform(0, self.__max_rnd_delay))
-            evt = mock_event.MockEvent(id=1, name='Test event')
+            evt = MockEvent(id=1, name='Test event')
             self.fire_event(evt)
             processed_events += 1
 

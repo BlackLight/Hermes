@@ -1,4 +1,4 @@
-from evesp.action import Action
+from ...action import Action
 
 class EventFileWriter(Action):
     """

@@ -1,9 +1,9 @@
 from threading import Thread
 
-from evesp.action import StopAction
-from evesp.bus import Bus
-from evesp.bus.event_bus import EventBus, Bus
-from evesp.event import Event
+from ..action import StopAction
+from ..bus import Bus
+from ..bus.event_bus import EventBus, Bus
+from ..event import Event
 
 class Component(object):
     """

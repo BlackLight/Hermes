@@ -3,8 +3,8 @@ from threading import RLock
 
 import pyinotify
 
-from evesp.event.file_system_event import FileSystemEvent
-from evesp.socket import Socket
+from ...event.file_system_event import FileSystemEvent
+from ...socket import Socket
 
 class InotifySocket(Socket):
     """

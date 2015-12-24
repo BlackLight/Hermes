@@ -2,14 +2,14 @@ from enum import Enum
 from itertools import cycle
 from threading import Thread, Event as ThreadEvent
 
-from evesp.action import ActionResponse, StopAction
-from evesp.bus import Bus, EmptyBus
-from evesp.bus.event_bus import EventBus
-from evesp.component import Component
-from evesp.event import Event, StopEvent
-from evesp.rules_parser import RulesParser
-from evesp.utils import *
-from evesp.worker import Worker
+from ..action import ActionResponse, StopAction
+from ..bus import Bus, EmptyBus
+from ..bus.event_bus import EventBus
+from ..component import Component
+from ..event import Event, StopEvent
+from ..rules_parser import RulesParser
+from ..utils import *
+from ..worker import Worker
 
 class EngineState(Enum):
     Initializing = 'Initializing',

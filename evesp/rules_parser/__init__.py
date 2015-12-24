@@ -1,7 +1,8 @@
 import inspect
 import json
-from evesp.event import Event
-from evesp.utils import *
+
+from ..event import Event, AttributeValueAny
+from ..utils import *
 
 class RulesParsingError(Exception):
     pass
@@ -39,8 +40,6 @@ class RulesParser(object):
         return rule
 
     def __parse_rule_when_attribute(self, rule, rule_idx):
-        from evesp.event import Event, AttributeValueAny
-
         if 'when' in rule:
             if not isinstance(rule['when'], list):
                 raise RulesParsingError('Expected [list] for rule #%d when attribute, got [%s]'
