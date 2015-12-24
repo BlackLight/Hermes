@@ -9,6 +9,8 @@ python:
 # command to run tests
 script: ./run_tests.py
 
+install: "pip install pyinotify"
+
 git:
     # Don't download all the submodules
     submodules: false
