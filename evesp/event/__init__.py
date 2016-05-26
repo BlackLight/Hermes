@@ -7,8 +7,8 @@ class Event(object):
     def __init__(self, component=None, **kwargs):
         """
         Constructor
-        Params:
-            kwargs -- key-value associations for the attributes of the object
+
+        kwargs -- key-value associations for the attributes of the object
         """
 
         self.__kwargs = kwargs

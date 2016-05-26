@@ -14,9 +14,7 @@ class FileSystemEvent(Event):
         mask -- Event mask
         """
 
-        super().__init__(kwargs)
-        self.path = path
-        self.mask = mask
+        super().__init__(kwargs, path=path, mask=mask)
 
 # vim:sw=4:ts=4:et:
 
