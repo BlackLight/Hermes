@@ -47,7 +47,7 @@ class InotifySocket(Socket):
     def on_event(self, event):
         self._processed_events += 1
         self.fire_event(
-            FileSystemEvent(path=event.path, mask=event.mask)
+            FileSystemEvent(path=event.pathname, mask=event.mask)
         )
 
         if self._n_events and self._processed_events >= self._n_events:
