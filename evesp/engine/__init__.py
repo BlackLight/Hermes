@@ -3,13 +3,14 @@ from itertools import cycle
 from threading import Thread, Event as ThreadEvent
 
 from ..action import ActionResponse, StopAction
-from ..bus import Bus, EmptyBus
+from ..bus import EmptyBus
 from ..bus.event_bus import EventBus
-from ..component import Component
-from ..event import Event, StopEvent
+from ..db import Db
+from ..event import StopEvent
 from ..rules_parser import RulesParser
-from ..utils import *
+from ..utils import component_class_by_module_name, get_full_class_name
 from ..worker import Worker
+
 
 class EngineState(Enum):
     Initializing = 'Initializing',
@@ -18,6 +19,7 @@ class EngineState(Enum):
     StoppingComponents = 'Stopping Components',
     StoppingWorkers = 'Stopping Workers',
     Stopped = 'Stopped'
+
 
 class Engine(object):
     """
@@ -31,8 +33,12 @@ class Engine(object):
     # The supervisor by default polls the workers' value bus each 0.01 seconds
     __DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD = 0.01
 
-    # Keep track of actions responses even when the actions are completed (default: False)
+    # Keep track of actions responses even when the actions are completed
+    # (default: False)
     __DEFAULT_TRACK_ACTIONS = False
+
+    # Name of the special section that identifies the engine configuration
+    __ENGINE_COMP_NAME = '__engine__'
 
     def __init__(self, config, atexit_callback=None):
         """
@@ -44,8 +50,10 @@ class Engine(object):
 
         self.__state = EngineState.Initializing
         self.config = config
+        self.db = Db.get_db(db_path=self.get_db_path())
 
-        # Event object use to synchronize the threads when the engine enters "Running" state
+        # Event object use to synchronize the threads when the engine enters
+        # "Running" state
         self.__engine_running = ThreadEvent()
 
         self.components = {}
@@ -54,27 +62,28 @@ class Engine(object):
         self.__parsed_engine_config = False
 
         for comp_name, component in self.config.components.items():
-            if self.__is_engine_comp_name(comp_name):
+            if comp_name == self.__ENGINE_COMP_NAME:
                 self.__parse_engine_comp_config(component)
             else:
-                if not 'module' in component:
-                    raise AttributeError('No module name specified for the component name '
-                        + comp_name + ' - e.g. evesp.component.mock_component')
-                self.__classes[comp_name] = component_class_by_module_name(component['module'])
+                if 'module' not in component:
+                    raise AttributeError(
+                        'No module name specified for the component name ' +
+                        comp_name + ' - e.g. evesp.component.mock_component')
+                self.__classes[comp_name] = \
+                    component_class_by_module_name(component['module'])
 
-                # Now that it's been used, removed the module key from the component configuration
+                # Now that it's been used, removed the module key from
+                # the component configuration
                 del self.config.components[comp_name]['module']
 
         if not self.__parsed_engine_config:
-            raise AttributeError('The configuration file has no __engine module configuration')
+            raise AttributeError(
+                'The configuration file has no %s module configuration' %
+                self.__ENGINE_COMP_NAME)
 
         self.__actions = {}
         self.__create_worker_pool()
         self.__state = EngineState.Ready
-
-    @classmethod
-    def __is_engine_comp_name(cls, comp_name):
-        return comp_name == '__engine'
 
     def __engine_parse_n_workers(self, config):
         self.__n_workers = self.__DEFAULT_WORKERS
@@ -116,10 +125,10 @@ class Engine(object):
         # Turn the list of workers into a circular pool
         self.__workers_pool = cycle(workers)
 
-        # Workers supervisor thread. It polls the workers' value bus and eventually
-        # reacts when values are ready, and stops the workers in case the engine
-        # sets the stop flag.
-        self.__workers_supervisor = Thread(target = self.__run_workers_supervisor)
+        # Workers supervisor thread. It polls the workers' value bus and
+        # eventually reacts when values are ready, and stops the workers in case
+        # the engine sets the stop flag.
+        self.__workers_supervisor = Thread(target=self.__run_workers_supervisor)
         self.__workers_supervisor.start()
 
     def __run_workers_supervisor(self):
@@ -132,14 +141,19 @@ class Engine(object):
         for worker in workers_pool:
             try:
                 # Thread exit if all the workers have been stopped
-                if len(self.__stopped_workers.keys()) == len(self.__workers): break
+                if len(self.__stopped_workers.keys()) == len(self.__workers):
+                    break
 
-                action_response = worker._value_bus.next(blocking=True, timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
+                action_response = worker._value_bus.next(
+                    blocking=True,
+                    timeout=self.__DEFAULT_WORKER_SUPERVISOR_POLL_PERIOD)
+
                 if isinstance(action_response, ActionResponse):
                     self.__process_action_response(action_response)
                 elif isinstance(action_response, StopEvent):
                     self.__on_worker_stop(worker)
-            except EmptyBus: continue
+            except EmptyBus:
+                continue
 
         self.__supervisor_exited.set()
 
@@ -150,7 +164,8 @@ class Engine(object):
         if action_id in self.__actions:
             if self.__track_actions:
                 self.__actions[action_id] = action_response
-            else: del self.__actions[action_id]
+            else:
+                del self.__actions[action_id]
 
     def __on_worker_stop(self, worker):
         self.__stopped_workers[worker.get_id()] = worker
@@ -163,7 +178,7 @@ class Engine(object):
         for rule in self.__rules:
             for event in rule['when']:
                 event_class = get_full_class_name(event)
-                if not event_class in self.__rules_by_event_class:
+                if event_class not in self.__rules_by_event_class:
                     self.__rules_by_event_class[event_class] = []
                 self.__rules_by_event_class[event_class].append(rule)
 
@@ -191,7 +206,7 @@ class Engine(object):
 
     def __get_matched_rules(self, evt):
         evt_class = get_full_class_name(evt)
-        if not evt_class in self.__rules_by_event_class:
+        if evt_class not in self.__rules_by_event_class:
             # No rules associated to this event type
             return []
 
@@ -207,7 +222,8 @@ class Engine(object):
 
     def start(self):
         """
-        Start the components listed in the configuration and the engine main loop
+        Start the components listed in the configuration and the engine main
+        loop
         """
 
         # Components will publish their events on the platform bus
@@ -218,7 +234,8 @@ class Engine(object):
         self.__engine_running.set()
 
         n_events = 0
-        while self.__events_to_process is None or n_events < self.__events_to_process:
+        while self.__events_to_process is None \
+                or n_events < self.__events_to_process:
             evt = self.__platform_bus.next()
             n_events += 1
             self.__process_event(evt)
@@ -234,9 +251,24 @@ class Engine(object):
         self.__stop_components()
         self.__stop_workers()
         self.__supervisor_exited.wait()
+        self.db.close()
         self.__state = EngineState.Stopped
 
-        if self.__atexit_callback: self.__atexit_callback()
+        if self.__atexit_callback:
+            self.__atexit_callback()
+
+    def get_db_path(self):
+        """
+        Get the db_path config value, which points to the SQLite database used
+        by the application.  An AttributeError will be raised in case the
+        configuration does not specify and db_path under __engine__
+        """
+
+        try:
+            return self.config.components[self.__ENGINE_COMP_NAME]['db_path']
+        except KeyError:
+            raise AttributeError("No db_path specified in your %s configuration"
+                                 % self.__ENGINE_COMP_NAME)
 
     def is_stopped(self):
         return self.__state == EngineState.Stopped
@@ -276,4 +308,3 @@ class Engine(object):
         return self.__actions
 
 # vim:sw=4:ts=4:et:
-
