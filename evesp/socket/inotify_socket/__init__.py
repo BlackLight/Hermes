@@ -27,7 +27,10 @@ class InotifySocket(Socket):
         """
 
         super().__init__(instance=self)
-        self._fs_resource = fs_resource
+        self._fs_resource = fs_resource['path']
+        self._track_diff = fs_resource['track_diff'] \
+            if 'track_diff' in fs_resource else False
+
         self._mask = mask
         self._n_events = n_events
         self._processed_events = 0
@@ -61,6 +64,8 @@ class FsEventProcessor(pyinotify.ProcessEvent):
         self.__socket = socket
 
     def process_default(self, event):
+        if self.__socket._track_diff:
+            " TODO "
         self.__socket.on_event(event)
 
 # vim:sw=4:ts=4:et:

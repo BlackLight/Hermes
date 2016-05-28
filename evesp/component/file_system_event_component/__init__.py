@@ -40,8 +40,11 @@ class FileSystemEventComponent(Component):
         super().__init__(instance=self, name=name, n_events=n_events)
 
         self.fs_resources = [
-            os.path.abspath(res['path'])
-            for res in json.loads(fs_resources)
+            {
+                'path': os.path.abspath(res['path']),
+                'track_diff': res['track_diff']
+                if 'track_diff' in res else False
+            } for res in json.loads(fs_resources)
         ]
 
         self.db = Db.get_db()
@@ -61,16 +64,18 @@ class FileSystemEventComponent(Component):
             }
 
             missing_entries = list(filter(
-                lambda res: res not in existing_entries, self.fs_resources
+                lambda res: res['path'] not in existing_entries,
+                self.fs_resources
             ))
 
-            for path in missing_entries:
-                if os.path.isdir(path):
+            for res in missing_entries:
+                if os.path.isdir(res['path']):
                     " TODO "
-                elif os.path.isfile(path):
-                    with open(path) as f:
+                elif os.path.isfile(res['path']):
+                    with open(res['path']) as f:
                         content = f.read()
-                        fs_res = FileSystemResource(path=path, content=content)
+                        fs_res = FileSystemResource(path=res['path'],
+                                                    content=content)
                         session.add(fs_res)
             session.commit()
         finally:
