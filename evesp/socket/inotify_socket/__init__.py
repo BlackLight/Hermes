@@ -1,10 +1,8 @@
-import sys
-from threading import RLock
-
 import pyinotify
 
 from ...event.file_system_event import FileSystemEvent
 from ...socket import Socket
+
 
 class InotifySocket(Socket):
     """
@@ -38,7 +36,8 @@ class InotifySocket(Socket):
         wm = pyinotify.WatchManager()
         wm.add_watch(self._fs_resource, self._mask)
 
-        self._notifier = pyinotify.ThreadedNotifier(wm,
+        self._notifier = pyinotify.ThreadedNotifier(
+            wm,
             default_proc_fun=FsEventProcessor(socket=self)
         )
 
@@ -56,6 +55,7 @@ class InotifySocket(Socket):
     def close(self):
         self._notifier.stop()
 
+
 class FsEventProcessor(pyinotify.ProcessEvent):
     def __init__(self, socket):
         self.__socket = socket
@@ -63,3 +63,4 @@ class FsEventProcessor(pyinotify.ProcessEvent):
     def process_default(self, event):
         self.__socket.on_event(event)
 
+# vim:sw=4:ts=4:et:
