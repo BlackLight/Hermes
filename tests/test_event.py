@@ -2,6 +2,7 @@ import unittest
 
 from evesp.event import Event
 
+
 class TestEvent(unittest.TestCase):
     def setUp(self):
         self.evt = Event(foo='bar')
@@ -28,4 +29,3 @@ if __name__ == "__main__":
     unittest.main()
 
 # vim:sw=4:ts=4:et:
-

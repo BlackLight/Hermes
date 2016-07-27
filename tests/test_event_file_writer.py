@@ -4,6 +4,7 @@ import unittest
 from evesp.event.mock_event import MockEvent
 from evesp.action.event_file_writer import EventFileWriter
 
+
 class TestEventFileWriter(unittest.TestCase):
     def setUp(self):
         basedir = os.path.dirname(os.path.realpath(__file__))
@@ -32,4 +33,3 @@ if __name__ == "__main__":
     unittest.main()
 
 # vim:sw=4:ts=4:et:
-

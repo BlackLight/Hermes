@@ -1,8 +1,6 @@
 import os
 import pickle
-import sys
 import threading
-import time
 import unittest
 
 from evesp.config import Config
@@ -10,11 +8,13 @@ from evesp.engine import Engine
 from evesp.event.mock_event import MockEvent
 from evesp.component.mock_component import MockComponent
 
+
 class TestMockComponent(unittest.TestCase):
     comp_name = 'My Mock Component'
     event_bin_file = os.path.join('tests', 'events.bin')
 
     def setUp(self):
+        # Clean up the event file
         try:
             os.unlink(self.event_bin_file)
         except FileNotFoundError:
@@ -24,8 +24,13 @@ class TestMockComponent(unittest.TestCase):
         self.engine_stopped = threading.Event()
 
         basedir = os.path.dirname(os.path.realpath(__file__))
-        config_file = os.path.join(basedir, 'conf', 'test_mock_component.conf')
-        self.engine = Engine( config = Config(config_file), atexit_callback = self.__on_engine_exit )
+        config_file = os.path.join(
+            basedir, 'conf', 'test_mock_component.conf')
+
+        self.engine = Engine(
+            config=Config(config_file),
+            on_exit=self.__on_engine_exit)
+
         self.engine.start()
 
     def __on_engine_exit(self):
@@ -45,7 +50,8 @@ class TestMockComponent(unittest.TestCase):
                 try:
                     evt = pickle.load(fp)
                     events.append(evt)
-                except EOFError: break
+                except EOFError:
+                    break
 
         self.assertEqual(len(events), 1)
         evt = events[0]
@@ -63,4 +69,3 @@ if __name__ == "__main__":
     unittest.main()
 
 # vim:sw=4:ts=4:et:
-

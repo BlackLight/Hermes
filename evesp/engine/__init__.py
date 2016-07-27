@@ -40,12 +40,12 @@ class Engine(object):
     # Name of the special section that identifies the engine configuration
     __ENGINE_COMP_NAME = '__engine__'
 
-    def __init__(self, config, atexit_callback=None):
+    def __init__(self, config, on_exit=None):
         """
         Constructor
 
-        config -- evesp.config.Config object
-        atexit_callback -- Optional method to invoke when the engine has stopped
+        config  -- evesp.config.Config object
+        on_exit -- Optional method to invoke when the engine has stopped
         """
 
         self.__state = EngineState.Initializing
@@ -57,7 +57,7 @@ class Engine(object):
         self.__engine_running = ThreadEvent()
 
         self.components = {}
-        self.__atexit_callback = atexit_callback
+        self.__on_exit = on_exit
         self.__classes = {}
         self.__parsed_engine_config = False
 
@@ -254,8 +254,8 @@ class Engine(object):
         self.db.close()
         self.__state = EngineState.Stopped
 
-        if self.__atexit_callback:
-            self.__atexit_callback()
+        if self.__on_exit:
+            self.__on_exit()
 
     def get_db_path(self):
         """

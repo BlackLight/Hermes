@@ -41,7 +41,7 @@ class TestFileSystemEventComponent(unittest.TestCase):
 
         self.engine = Engine(
             config=Config(config_file),
-            atexit_callback=self.__on_engine_exit
+            on_exit=self.__on_engine_exit
         )
 
         threading.Thread(target=self.engine.start).start()

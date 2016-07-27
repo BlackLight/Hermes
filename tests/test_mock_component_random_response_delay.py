@@ -25,7 +25,7 @@ class TestMockComponent(unittest.TestCase):
 
         basedir = os.path.dirname(os.path.realpath(__file__))
         config_file = os.path.join(basedir, 'conf', 'test_mock_component_random_response_delay.conf')
-        self.engine = Engine( config = Config(config_file), atexit_callback = self.__on_engine_exit )
+        self.engine = Engine( config = Config(config_file), on_exit = self.__on_engine_exit )
         self.engine.start()
 
     def __on_engine_exit(self):

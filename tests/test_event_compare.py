@@ -3,9 +3,11 @@ import unittest
 from evesp.event import Event, AttributeValueAny
 from evesp.event.mock_event import MockEvent
 
+
 class MyEvent(Event):
     def __init__(self, id, name):
         super().__init__(id=id, name=name)
+
 
 class TestEventCompare(unittest.TestCase):
     def setUp(self):
@@ -45,4 +47,3 @@ if __name__ == "__main__":
     unittest.main()
 
 # vim:sw=4:ts=4:et:
-
