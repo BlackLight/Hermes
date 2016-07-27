@@ -10,7 +10,7 @@ from evesp.component.mock_component import MockComponent
 
 
 class TestMockComponent(unittest.TestCase):
-    comp_name = 'My Mock Component'
+    comp_name = 'my_mock_component'
     event_bin_file = os.path.join('tests', 'events.bin')
 
     def setUp(self):
@@ -23,12 +23,21 @@ class TestMockComponent(unittest.TestCase):
         # Synchronize on this event to wait the engine stop
         self.engine_stopped = threading.Event()
 
-        basedir = os.path.dirname(os.path.realpath(__file__))
-        config_file = os.path.join(
-            basedir, 'conf', 'test_mock_component.conf')
+        config = Config(
+            __engine__={
+                'rules_file': 'tests/rules/test_mock_component_rules.json',
+                'db_path': 'tests/main.db',
+                'events_to_process': '1',
+                'workers': '3',
+            },
+
+            my_mock_component={
+                'module': 'evesp.component.mock_component',
+            }
+        )
 
         self.engine = Engine(
-            config=Config(config_file),
+            config=config,
             on_exit=self.__on_engine_exit)
 
         self.engine.start()
