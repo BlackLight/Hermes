@@ -25,6 +25,7 @@ class TestMockComponent(unittest.TestCase):
 
         config = Config(
             __engine__={
+                # rules can either be a JSON file or a Python object
                 # 'rules': 'tests/rules/test_mock_component_rules.json',
                 'rules': [
                     {
@@ -53,6 +54,7 @@ class TestMockComponent(unittest.TestCase):
                     }
                 ],
                 'db_path': 'tests/main.db',
+
                 # Stop the engine after receiving the first event
                 # (default: listen for event indefinitely)
                 'events_to_process': '1',
@@ -69,6 +71,7 @@ class TestMockComponent(unittest.TestCase):
 
         self.engine = Engine(
             config=config,
+            # Callback to be invoked when the engine has terminated
             on_exit=self.__on_engine_exit)
 
         self.engine.start()
@@ -77,6 +80,7 @@ class TestMockComponent(unittest.TestCase):
         self.engine_stopped.set()
 
     def test_mock_component(self):
+        # Wait for the engine to stop
         self.engine_stopped.wait()
 
         self.assertTrue(self.comp_name in self.engine.components)
