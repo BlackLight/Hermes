@@ -97,10 +97,9 @@ class Engine(object):
             assert config['events_to_process'].isnumeric()
             self.__events_to_process = int(config['events_to_process'])
 
-    def __engine_parse_rules_file(self, config):
-        assert 'rules_file' in config
-        rules_file = config['rules_file']
-        self.__create_event_map(rules_file)
+    def __engine_parse_rules(self, config):
+        assert 'rules' in config
+        self.__create_event_map(config['rules'])
 
     def __engine_parse_track_actions(self, config):
         self.__track_actions = self.__DEFAULT_TRACK_ACTIONS
@@ -112,7 +111,7 @@ class Engine(object):
 
         self.__engine_parse_n_workers(config)
         self.__engine_parse_events_to_process(config)
-        self.__engine_parse_rules_file(config)
+        self.__engine_parse_rules(config)
         self.__engine_parse_track_actions(config)
 
     def __create_worker_pool(self):
@@ -170,9 +169,9 @@ class Engine(object):
     def __on_worker_stop(self, worker):
         self.__stopped_workers[worker.get_id()] = worker
 
-    def __create_event_map(self, rules_file):
-        self.__rules_file = rules_file
-        self.__rules = RulesParser(self.__rules_file).get_rules()
+    def __create_event_map(self, rules):
+        self.__rules = rules
+        self.__rules = RulesParser(self.__rules).get_rules()
         self.__rules_by_event_class = {}
 
         for rule in self.__rules:

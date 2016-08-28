@@ -2,10 +2,12 @@ import inspect
 import json
 
 from ..event import Event, AttributeValueAny
-from ..utils import *
+from ..utils import event_class_by_class_name, action_class_by_class_name
+
 
 class RulesParsingError(Exception):
     pass
+
 
 class RulesParser(object):
     """
@@ -13,10 +15,18 @@ class RulesParser(object):
     Fabio Manganiello, 2015 <blacklight86@gmail.com>
     """
 
-    def __init__(self, rules_file):
-        self.__rules_file = rules_file
-        with open(self.__rules_file) as fp:
-            self.__root = json.load(fp)
+    def __init__(self, rules):
+        self.__rules = rules
+
+        if isinstance(rules, str):
+            with open(self.__rules) as fp:
+                self.__root = json.load(fp)
+        elif isinstance(rules, object):
+            self.__root = rules
+        else:
+            raise RulesParsingError('Parameter error: rules. Expected: ' +
+                                    'string or object. Got: %s' % type(rules))
+
         self.__parse_rules()
 
     def __parse_rules(self):
@@ -30,7 +40,7 @@ class RulesParser(object):
             )
 
     def __event_from_json(self, event):
-        if not 'class' in event:
+        if 'class' not in event:
             event['class'] = Event.__name__
         return event
 
@@ -42,8 +52,9 @@ class RulesParser(object):
     def __parse_rule_when_attribute(self, rule, rule_idx):
         if 'when' in rule:
             if not isinstance(rule['when'], list):
-                raise RulesParsingError('Expected [list] for rule #%d when attribute, got [%s]'
-                    % (rule_idx, type(rule['when']).__name__))
+                raise RulesParsingError('Expected [list] for rule #%d ' +
+                                        'when attribute, got [%s]' %
+                                        (rule_idx, type(rule['when']).__name__))
         else:
             # Start-up rule, executed when the engine is started: no 'when'
             # conditions on the actions.
@@ -53,13 +64,16 @@ class RulesParser(object):
 
         events = []
         for event in rule['when']:
-            event_class = event_class_by_class_name(event['class']) if 'class' in event else Event
-            event_attributes = list(inspect.signature(event_class.__init__).parameters.keys())
+            event_class = event_class_by_class_name(event['class']) \
+                if 'class' in event else Event
+            event_attributes = list(inspect.signature(event_class.__init__)
+                                    .parameters.keys())
             event_attributes.pop(0)  # Remove self
-            filter_attributes = event['attributes'] if 'attributes' in event else {}
+            filter_attributes = event['attributes'] \
+                if 'attributes' in event else {}
 
             for attr in event_attributes:
-                if not attr in filter_attributes:
+                if attr not in filter_attributes:
                     filter_attributes[attr] = AttributeValueAny()
             events.append(event_class(**(filter_attributes)))
 
@@ -67,19 +81,26 @@ class RulesParser(object):
         return rule
 
     def __parse_rule_then_attribute(self, rule, rule_idx):
-        if not 'then' in rule:
-            raise RulesParsingError('Rule #%d has no "then" attribute' % rule_idx)
+        if 'then' not in rule:
+            raise RulesParsingError('Rule #%d has no "then" attribute'
+                                    % rule_idx)
 
         if not isinstance(rule['then'], list):
-            raise RulesParsingError('Expected [list] for rule #%d then attribute, got [%s]'
-                % (rule_idx, type(rule['then']).__name__))
+            raise RulesParsingError('Expected [list] for rule #%d then ' +
+                                    'attribute, got [%s]' %
+                                    (rule_idx, type(rule['then']).__name__))
 
         actions = []
         for action in rule['then']:
-            action_class = action_class_by_class_name(action['class'] or 'action')
-            action_attributes = list(inspect.signature(action_class.__init__).parameters.keys())
+            action_class = action_class_by_class_name(
+                action['class'] or 'action')
+
+            action_attributes = list(inspect.signature(action_class.__init__)
+                                     .parameters.keys())
             action_attributes.pop(0)  # Remove self
-            init_arguments = action['arguments'] if 'arguments' in action else {}
+            init_arguments = action['arguments'] \
+                if 'arguments' in action else {}
+
             actions.append(action_class(**(init_arguments)))
 
         rule['then'] = actions
@@ -92,4 +113,3 @@ class RulesParser(object):
         return self.__rules
 
 # vim:sw=4:ts=4:et:
-

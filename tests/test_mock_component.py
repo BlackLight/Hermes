@@ -25,13 +25,44 @@ class TestMockComponent(unittest.TestCase):
 
         config = Config(
             __engine__={
-                'rules_file': 'tests/rules/test_mock_component_rules.json',
+                # 'rules': 'tests/rules/test_mock_component_rules.json',
+                'rules': [
+                    {
+                        # Display name for the rule
+                        'label': 'Test rule 1',
+                        'when': [
+                            {
+                                # React when receiving a MockEvent with id=1
+                                'class': 'MockEvent',
+                                'attributes': {
+                                    'id': 1
+                                }
+                            }
+                        ],
+
+                        'then': [
+                            # Trigger an EventFileWriter action that will write
+                            # the received event to the filepath argument
+                            {
+                                'class': 'EventFileWriter',
+                                'arguments': {
+                                    'filepath': 'tests/events.bin'
+                                }
+                            }
+                        ]
+                    }
+                ],
                 'db_path': 'tests/main.db',
+                # Stop the engine after receiving the first event
+                # (default: listen for event indefinitely)
                 'events_to_process': '1',
+
+                # Spawn 3 workers for running the action
                 'workers': '3',
             },
 
             my_mock_component={
+                # Module name for the component to be spawned
                 'module': 'evesp.component.mock_component',
             }
         )
