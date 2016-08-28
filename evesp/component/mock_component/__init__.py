@@ -1,5 +1,6 @@
-from ...socket.mock_socket import MockSocket, RandomDelayMockSocket
+from ...socket.mock_socket import MockSocket
 from .. import Component
+
 
 class MockComponent(Component):
     """
@@ -26,4 +27,3 @@ class MockComponent(Component):
             evt = self._component_bus.next()
             self.fire_event(evt)
             processed_events += 1
-

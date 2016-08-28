@@ -4,6 +4,7 @@ import time
 from ...event.mock_event import MockEvent
 from .. import Socket
 
+
 class MockSocket(Socket):
     """
     Mock socket class. It posts n_events mock events (default: 1) on the
@@ -22,6 +23,7 @@ class MockSocket(Socket):
             self.fire_event(evt)
             processed_events += 1
 
+
 class RandomDelayMockSocket(MockSocket):
     """
     A mock socket class which posts n_events at random intervals to the
@@ -31,7 +33,8 @@ class RandomDelayMockSocket(MockSocket):
 
     def __init__(self, n_events=1, max_rnd_delay=1):
         """
-        max_rnd_delay -- Maximum number of seconds for the calculation of the random delay between two events
+        max_rnd_delay -- Maximum number of seconds for the calculation of
+        the random delay between two events
         """
         super().__init__(n_events=n_events)
         self.__max_rnd_delay = max_rnd_delay
@@ -43,4 +46,3 @@ class RandomDelayMockSocket(MockSocket):
             evt = MockEvent(id=1, name='Test event')
             self.fire_event(evt)
             processed_events += 1
-
