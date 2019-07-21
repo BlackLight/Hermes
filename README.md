@@ -1,5 +1,10 @@
 [![Build Status](https://travis-ci.org/BlackLight/evesp.svg?branch=master)](https://travis-ci.org/BlackLight/evesp)
 
+Deprecation note
+================
+
+This project has been renamed, extended and expanded into [platypush](https://github.com/BlackLight/platypush).
+
 Installation
 ============
 
